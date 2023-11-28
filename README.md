@@ -8,8 +8,7 @@
        .venv\Scripts\activate
        pip install Flask
 
-2. 
+2. Клонувати репозиторій з сайту на пк:
+   В GitDesktop вибрати 'clone repository' і вставити посилання https://github.com/kerrian21/project
 
-(2) Підключити базу до коду
 
-(3) 
