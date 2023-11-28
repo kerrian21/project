@@ -11,8 +11,6 @@ CREATE TABLE products (
 product_id INT PRIMARY KEY,
 seller_id INT,
 title VARCHAR(20),
-type INT,
-size INT,
 price INT,
 rating INT,
 rating_count INT
@@ -143,78 +141,6 @@ drop table addition;
 alter table addition_dg_tmp
     rename to addition;
 
-
-
--- Ключ з продуктс до size(size_id)
-create table products_dg_tmp
-(
-    product_id   INT
-        primary key,
-    seller_id    INT,
-    title        VARCHAR(20),
-    type         INT,
-    size         INT
-        constraint products
-            references product_sizes,
-    price        INT,
-    rating       INT,
-    rating_count INT
-);
-
-insert into products_dg_tmp(product_id, seller_id, title, type, size, price, rating, rating_count)
-select product_id,
-       seller_id,
-       title,
-       type,
-       size,
-       price,
-       rating,
-       rating_count
-from products;
-
-drop table products;
-
-alter table products_dg_tmp
-    rename to products;
-
-
-
--- Ключ з продуктс до types(type_id)
-create table products_dg_tmp
-(
-    product_id   INT
-        primary key,
-    seller_id    INT,
-    title        VARCHAR(20),
-    type         INT
-        constraint products
-            references product_types,
-    size         INT
-        constraint products
-            references product_sizes,
-    price        INT,
-    rating       INT,
-    rating_count INT
-);
-
-insert into products_dg_tmp(product_id, seller_id, title, type, size, price, rating, rating_count)
-select product_id,
-       seller_id,
-       title,
-       type,
-       size,
-       price,
-       rating,
-       rating_count
-from products;
-
-drop table products;
-
-alter table products_dg_tmp
-    rename to products;
-
-
--- Ключ з продуктс до seller(seller_id)
 create table products_dg_tmp
 (
     product_id   INT
@@ -223,30 +149,16 @@ create table products_dg_tmp
         constraint products
             references seller,
     title        VARCHAR(20),
-    type         INT
-        constraint products
-            references product_types,
-    size         INT
-        constraint products
-            references product_sizes,
     price        INT,
     rating       INT,
     rating_count INT
 );
 
-insert into products_dg_tmp(product_id, seller_id, title, type, size, price, rating, rating_count)
-select product_id,
-       seller_id,
-       title,
-       type,
-       size,
-       price,
-       rating,
-       rating_count
+insert into products_dg_tmp(product_id, seller_id, title, price, rating, rating_count)
+select product_id, seller_id, title, price, rating, rating_count
 from products;
 
 drop table products;
 
 alter table products_dg_tmp
     rename to products;
-
