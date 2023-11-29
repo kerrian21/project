@@ -6,9 +6,14 @@
        cd myproject
        py -3 -m venv .venv
        .venv\Scripts\activate
-       pip install Flask
+       pip install Flask --upgrade pip
+     
 
 2. Клонувати репозиторій з сайту на пк:
    В GitDesktop вибрати 'clone repository' і вставити посилання https://github.com/kerrian21/project
+
+3. Відкриваєм файл 'identifier.sqlite', щоб додати базу.
+
+4. В PyCharm заходимо в 'File - Settings - (в пошуку) interpreter' і додаєм фласк. (+ внизу вибираєм global interpretors).
 
 
