@@ -1,6 +1,7 @@
 (1) Інтегрувати код з репозиторія собі на пк.
-
-1. Встановити Flask:
+          (скачати PyCharm i DataGrip на JetBrains з корпоративної пошти)
+          
+1. Встановити Flask:(не треба)
      
        mkdir myproject
        cd myproject
