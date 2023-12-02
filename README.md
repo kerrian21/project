@@ -1,17 +1,10 @@
 (1) Інтегрувати код з репозиторія собі на пк.
+
           (скачати PyCharm i DataGrip на JetBrains з корпоративної пошти)
           
-1. Встановити Flask:(не треба)
-     
-       mkdir myproject
-       cd myproject
-       py -3 -m venv .venv
-       .venv\Scripts\activate
-       pip install Flask --upgrade pip
-     
-
-2. Клонувати репозиторій з сайту на пк:
-   В GitDesktop вибрати 'clone repository' і вставити посилання https://github.com/kerrian21/project
+1. Клонувати репозиторій з сайту на пк:
+   
+           В GitDesktop вибрати 'clone repository' і вставити посилання https://github.com/kerrian21/project
 
 3. Відкриваєм файл 'identifier.sqlite', щоб додати базу.
 
