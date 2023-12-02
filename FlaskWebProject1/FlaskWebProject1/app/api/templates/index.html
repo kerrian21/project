@@ -2,7 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script>
+        function handleOptionSelection() {
+            var selectedOption = $("#clothesSelect").val();
+            var formAction = "catalog";
+            formAction += "?category=" + selectedOption;
+            $("#searchForm").attr("action", formAction).submit();
+        }
+    </script>
+
 </head>
 <style>
 
@@ -38,29 +49,24 @@
 
     <body>
 
-
-        <button onclick="changeBg()">Речі</button>
+        <form action="search" method="POST">
         <button onclick="changefont()">пошук</button>
+        <input type="text" name="query">
+        </form>
 
-
-
-        <input tupe="text" id="inp">
-        <form>
-            <select onechange="document.bg.clothes=this.options[this.selected Index].value">
-
-                <option value="Shirt">Сорочка</option>
-                <option value="t-shirt">Футболка</option>
-                <option value="pants">Штани</option>
-                <option value="Jacket">Куртка</option>
-                <option value="Footwear">Взуття</option>
-
-
-
-            </select>
-
+        <form action="catalog" method="POST">
+        <button onclick="changefont()">Речі</button>
+        <select name="clothes" id="clothesSelect">
+            <option value="Shirt">Сорочка</option>
+            <option value="t-shirt">Футболка</option>
+            <option value="pants">Штани</option>
+            <option value="Jacket">Куртка</option>
+            <option value="Footwear">Взуття</option>
+        </select>
         </form>
 
 
+    </>
 
 
     </body>

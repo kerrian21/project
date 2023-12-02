@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script>
+        function handleOptionSelection() {
+            var selectedOption = $("#clothesSelect").val();
+            var formAction = "catalog";
+            formAction += "?category=" + selectedOption;
+            $("#searchForm").attr("action", formAction).submit();
+        }
+    </script>
+
+</head>
+<style>
+
+
+
+    summary::-webkit-details marker {
+        display: none;
+    }
+
+    summary {
+        height: 30px;
+        width: 98%;
+        position: relative;
+        left: 1%;
+        border: 1px solid #333;
+        margin: 10px;
+        text-align: center;
+        line-height: 30px;
+        border-radius: 10px;
+        background-color: white;
+    }
+</style>
+
+
+
+<body>
+
+    <datails>
+        <summary>PER ASPERA AD ASTRA</summary>
+
+
+    </datails>
+
+    <body>
+
+        <form action="search" method="POST">
+        <button onclick="changefont()">пошук</button>
+        <input type="text" name="query">
+        </form>
+
+        <form action="catalog" method="POST">
+        <button onclick="changefont()">Речі</button>
+        <select name="clothes" id="clothesSelect">
+            <option value="Shirt">Сорочка</option>
+            <option value="t-shirt">Футболка</option>
+            <option value="pants">Штани</option>
+            <option value="Jacket">Куртка</option>
+            <option value="Footwear">Взуття</option>
+        </select>
+        </form>
+
+    {% if result %}
+        <ul>
+            {% for res in result %}
+                <li>
+                    <strong>Title:</strong> {{ res[0] }} <br>
+                    <strong>Price:</strong> {{ res[1] }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No results found for your query.</p>
+    {% endif %}
+
+
+    </>
+
+
+    </body>
+    <html />
+
+
+
+
