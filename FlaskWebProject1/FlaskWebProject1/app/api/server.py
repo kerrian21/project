@@ -62,24 +62,34 @@ def catalog():
         if request.method == 'POST':
             name = request.form['clothes']
             if name == 'Shirt':
-                cursor.execute("SELECT title, price FROM products WHERE title = 'Moody Shirt'")
+                cursor.execute("""SELECT title, price FROM products 
+                                        JOIN product_types ON products.product_id = product_types.product_id WHERE product_types.description = ?""",
+                            (name,))
                 result = cursor.fetchall()
                 return render_template('shirt.html', result=result)
 
-            elif name == 't-shirt':
-                    cursor.execute("SELECT title, price FROM products WHERE title = 'T-Shirt lalala'")
+            elif name == 'T-Shirt':
+                    cursor.execute("""SELECT title, price FROM products 
+                                            JOIN product_types ON products.product_id = product_types.product_id WHERE product_types.description = ?""",
+                                (name,))
                     result = cursor.fetchall()
                     return render_template('t-shirt.html', result=result)
             elif name == 'Jacket':
-                    cursor.execute("SELECT title, price FROM products WHERE title IN ('Example Jacket', 'Jack')")
+                    cursor.execute("""SELECT title, price FROM products 
+                                            JOIN product_types ON products.product_id = product_types.product_id WHERE product_types.description = ?""",
+                                (name,))
                     result = cursor.fetchall()
                     return render_template('jacket.html', result=result)
-            elif name == 'pants':
-                    cursor.execute("SELECT title, price FROM products WHERE title IN ('White pants', 'Black pants')")
+            elif name == 'Pants':
+                    cursor.execute("""SELECT title, price FROM products 
+                                           JOIN product_types ON products.product_id = product_types.product_id WHERE product_types.description = ?""",
+                               (name,))
                     result = cursor.fetchall()
                     return render_template('pants.html', result=result)
             elif name == 'Footwear':
-                    cursor.execute("SELECT title, price FROM products WHERE title = 'FootweaRR'")
+                    cursor.execute("""SELECT title, price FROM products 
+                                           JOIN product_types ON products.product_id = product_types.product_id WHERE product_types.description = ?""",
+                               (name,))
                     result = cursor.fetchall()
                     return render_template('footwear.html', result=result)
 
@@ -91,7 +101,7 @@ def _range_():
         if request.methods == 'POST':
             category = request.foorm['Category']
             name = request.form['Name products']
-            color = requst.form['Color']
+            color = request.form['Color']
             _range_ = request.form['Range']
 
             conn = sqlite3.connect('schema.sql')
