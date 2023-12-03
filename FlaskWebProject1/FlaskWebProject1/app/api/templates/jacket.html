@@ -19,9 +19,12 @@
 
 
 
-    summary::-webkit-details marker {
-        display: none;
-    }
+    summary::-webkit-details marker{
+            display: none;
+        }
+         html{
+             background-color: #800080;
+         }
 
     summary {
         height: 30px;
@@ -74,7 +77,8 @@
             {% for res in result %}
                 <li>
                     <strong>Title:</strong> {{ res[0] }} <br>
-                    <strong>Price:</strong> {{ res[1] }}
+                    <strong>Color:</strong> {{ res[1] }} <br>
+                    <strong>Price:</strong> {{ res[2] }}
                 </li>
             {% endfor %}
         </ul>
