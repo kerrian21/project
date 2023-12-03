@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+     <style>
+         
+
+       
+        summary::-webkit-details marker{
+            display: none;
+        }
+         html{
+             background-color: #800080;
+         }
+        
+        summary{
+            height: 30px;
+            width: 98%;
+            position: relative;
+            left: 1%;
+            border: 1px solid #333;
+            margin: 10px;
+            text-align: center;
+            line-height: 30px;
+            border-radius: 10px;
+            background-color: white;
+            
+                
+        }
+         
+         
+            
+              
+        .контейнер-пошуку {
+            display: flex;
+            justify-content: flex-end;
+            width: 70%; 
+            margin: 0 auto; 
+            padding: 10px;
+        }
+
+        .кнопка {
+            margin-left: 10px; 
+        }
+
+        #inp {
+            margin-left: 5px; 
+        }
+       
+        }
+         
+         .кнопка{
+             margin-right: 50px;
+         }
+         
+          .контейнер-контактів {
+            display: none;
+            position: fixed;
+            bottom: 50px;
+            right: 10px;
+            padding: 10px;
+            background-color: #800080;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .кнопка-контакти {
+            position: fixed;
+            bottom: 50px;
+            right: 10px;
+            padding: 10px 20px;
+            background-color: #800080;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+          
+         
+         
+    
+    
+
+    </style>
+
+
+
+<body>
+   
+    
+     <h1> PER ASPERA AD ASTRA</h1>
+
+   
+   <datails>
+   
+   
+   
+ </datails>
+ 
+<body>
+    <div class="контейнер-пошуку">
+        <button class="кнопка">ПОШУК</button>
+        <input type="text" id="inp">
+    </div>
+  
+    
+   
+   <button onclick="changeBg()">КАТАЛОГ</button>
+    
+ 
+     <button class="кнопка-контакти" onclick="показатиКонтакти()">Контакти</button>
+    
+    
+     <div class="контейнер-контактів" id="контейнер-контактів">
+        
+        Телефон: 0976762133(Олег)<br>
+         
+        Електронна пошта: olegprotsyk252@gmail.com<br>
+         
+          Телефон:+380680727846(Володя)<br>
+        
+        Електронна пошта:volodymyr.nakonechnyi.kb.2022@lpnu.ua<br>
+         
+          Телефон:+(Максим)<br>
+        
+        Електронна пошта:maksym.yanchynskyi.kb.2022@lpnu.ua<br>
+         
+           Телефон:+(Данило)<br>
+        
+        Електронна пошта:danylo.buhai.kb.2022@lpnu.ua<br>
+         
+            Телефон:+380730841941(Дмитро)<br>
+        
+        Електронна пошта:Dmytro.Chornii.KB.2023@lpnu.ua<br>
+         
+         
+         
+         
+         
+        
+        
+         
+         
+        
+    </div>
+    
+    <script>
+        function показатиКонтакти() {
+            var контейнер = document.getElementById("контейнер-контактів");
+            контейнер.style.display = (контейнер.style.display === "none") ? "block" : "none";
+        }
+    </script>
+
+    
+   
+  
+    <form>
+    <select onechange="document.bg.clothes=this.options[this.selected Index].value">
+        
+        <option value="Shirt">Сорочка</option>
+        <option value="t-shirt">Футболка</option>
+        <option value="pants">Штани</option>
+        <option value="Jacket">Куртка</option>
+        <option value="Footwear">Взуття</option>
+        
+        
+        
+        </select>
+    
+    </form>
+  
+ 
+  
+   
+</body>
+    <html/>
