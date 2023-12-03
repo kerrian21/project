@@ -50,20 +50,26 @@
     <body>
 
         <form action="search" method="POST">
-        <button onclick="changefont()">пошук</button>
+        <button onclick="changefont()">Пошук</button>
         <input type="text" name="query">
         </form>
 
         <form action="catalog" method="POST">
-        <button onclick="changefont()">Речі</button>
+        <button onclick="changefont()">Обрати</button>
         <select name="clothes" id="clothesSelect">
             <option value="Shirt">Сорочка</option>
-            <option value="t-shirt">Футболка</option>
-            <option value="pants">Штани</option>
+            <option value="T-Shirt">Футболка</option>
+            <option value="Pants">Штани</option>
             <option value="Jacket">Куртка</option>
             <option value="Footwear">Взуття</option>
         </select>
         </form>
+        <form action="/filter_price" method="GET" id="filterForm">
+            <label for="price">Enter Price:</label>
+            <input type="text" id="price" name="name" value="{{ price }}" required>
+            <button type="submit">Filter</button>
+        </form>
+
         {% if results %}
         <ul>
             {% for result in results %}

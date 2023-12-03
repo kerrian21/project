@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        summary::-webkit-details-marker {
+            display: none;
+        }
+
+        summary {
+            height: 30px;
+            width: 98%;
+            position: relative;
+            left: 1%;
+            border: 1px solid #333;
+            margin: 10px;
+            text-align: center;
+            line-height: 30px;
+            border-radius: 10px;
+            background-color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <details>
+        <summary>PER ASPERA AD ASTRA</summary>
+    </details>
+    <form action="search" method="POST">
+        <button onclick="changefont()">Пошук</button>
+        <input type="text" name="query">
+    </form>
+
+    <form action="catalog" method="POST" id="catalogForm">
+        <button onclick="changefont()">Обрати</button>
+        <select name="clothes" id="clothesSelect">
+            <option value="Shirt">Сорочка</option>
+            <option value="T-Shirt">Футболка</option>
+            <option value="Pants">Штани</option>
+            <option value="Jacket">Куртка</option>
+            <option value="Footwear">Взуття</option>
+        </select>
+    </form>
+
+    <form action="/filter_price" method="GET" id="filterForm">
+        <label for="price">Enter Price:</label>
+        <input type="text" id="price" name="name" value="{{ price }}" required>
+        <button type="submit">Filter</button>
+    </form>
+
+    <script>
+        // Retrieve the value of the price from the URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const price = urlParams.get('name');
+
+        // Set the value of the price input field
+        document.getElementById('price').value = price;
+    </script>
+
+    {% if message %}
+    <p>{{ message }}</p>
+{% endif %}
+
+{% if results %}
+    <ul>
+        {% for res in results %}
+            <li>
+                <strong>Title:</strong> {{ res[0] }} <br>
+                <strong>Price:</strong> {{ res[1] }}
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+
+</body>
+</html>
+
+
+
+
+
+
+
