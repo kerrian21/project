@@ -10,4 +10,5 @@
 
 4. В PyCharm заходимо в 'File - Settings - (в пошуку) interpreter' і додаєм фласк. (+ внизу вибираєм global interpretors).
 
+5. to do 
 
