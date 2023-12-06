@@ -6,160 +6,107 @@ DROP TABLE IF EXISTS product_sizes;
 DROP TABLE IF EXISTS user;
 DROP TABLE IF EXISTS address;
 DROP TABLE IF EXISTS addition;
-
-CREATE TABLE products (
-product_id INTEGER PRIMARY KEY AUTOINCREMENT ,
-seller_id INTEGER,
-title TEXT,
-price INTEGER,
-rating INTEGER,
-rating_count INTEGER
-);
-
-CREATE TABLE sells(
-sell_id INTEGER PRIMARY KEY AUTOINCREMENT ,
-product_id INTEGER,
-seller_id INTEGER,
-client_id INTEGER,
-date_of_sale TEXT,
-date_of_insertion TEXT,
-status_id TEXT,
-items_count INTEGER,
-address_id INTEGER
-);
-
-CREATE TABLE seller(
-seller_id INTEGER PRIMARY KEY AUTOINCREMENT ,
-title TEXT,
-first_name TEXT,
-last_name TEXT,
-rating REAL,
-registration_date TEXT
-);
-
-CREATE TABLE user(
-user_id INTEGER PRIMARY KEY AUTOINCREMENT ,
-login TEXT UNIQUE,
-password TEXT,
-phone INTEGER,
-email TEXT
-);
-
-CREATE TABLE addition(
-addition_id INTEGER PRIMARY KEY AUTOINCREMENT ,
-product_id INTEGER,
-seller_id INTEGER,
-items_count INTEGER,
-size TEXT,
-date_of_adding REAL,
-is_written_of INTEGER
-);
-
-CREATE TABLE address(
-address_id INTEGER PRIMARY KEY AUTOINCREMENT ,
-address TEXT
-);
-
-CREATE TABLE product_sizes(
-size_id INTEGER PRIMARY KEY AUTOINCREMENT ,
-product_id INTEGER,
-size TEXT,
-items_count INTEGER
-);
-CREATE TABLE product_types(
-type_id INTEGER PRIMARY KEY AUTOINCREMENT ,
-description TEXT,
-product_id INTEGER
-);
+DROP TABLE IF EXISTS color;
 
 
--- Ключ з size до продуктс(product_id)
-create table product_sizes_dg_tmp
+create table address
 (
-    size_id     INTEGER
-        primary key autoincrement,
-    product_id  INTEGER
-        constraint product_sizes
-            references products,
-    size        TEXT,
-    items_count INTEGER
+    address_id INTEGER,
+    address    TEXT,
+    primary key (address_id autoincrement)
 );
 
-insert into product_sizes_dg_tmp(size_id, product_id, size, items_count)
-select size_id, product_id, size, items_count
-from product_sizes;
-
-drop table product_sizes;
-
-alter table product_sizes_dg_tmp
-    rename to product_sizes;
-
-
--- Ключ з type до продуктс(product_id)
-create table product_types_dg_tmp
+create table seller
 (
-    type_id     INTEGER
-        primary key autoincrement,
-    description TEXT,
-    product_id  INTEGER
-        constraint product_types
-            references products
+    seller_id         INTEGER,
+    title             TEXT,
+    fullname          TEXT,
+    rating            REAL,
+    registration_date TEXT,
+    primary key (seller_id autoincrement)
 );
 
-insert into product_types_dg_tmp(type_id, description, product_id)
-select type_id, description, product_id
-from product_types;
-
-drop table product_types;
-
-alter table product_types_dg_tmp
-    rename to product_types;
-
-
--- Ключ з addition до продуктс(product_id)
-create table addition_dg_tmp
+create table products
 (
-    addition_id    INTEGER
-        primary key autoincrement,
-    product_id     INTEGER
-        constraint addition
-            references products,
+    product_id   INTEGER,
+    seller_id    INTEGER,
+    title        TEXT,
+    price        REAL,
+    rating       INTEGER,
+    rating_count INTEGER,
+    color        TEXT,
+    primary key (product_id autoincrement),
+    constraint products
+        foreign key (seller_id) references seller
+);
+
+create table addition
+(
+    addition_id    INTEGER,
+    product_id     INTEGER,
     seller_id      INTEGER,
     items_count    INTEGER,
     size           TEXT,
     date_of_adding REAL,
-    is_written_of  INTEGER
+    is_written_of  INTEGER,
+    primary key (addition_id autoincrement),
+    constraint addition
+        foreign key (product_id) references products
 );
 
-insert into addition_dg_tmp(addition_id, product_id, seller_id, items_count, size, date_of_adding, is_written_of)
-select addition_id, product_id, seller_id, items_count, size, date_of_adding, is_written_of
-from addition;
-
-drop table addition;
-
-alter table addition_dg_tmp
-    rename to addition;
-
-
---Ключ з продуктс до seller(seller_id)
-create table products_dg_tmp
+create table color
 (
-    product_id   INTEGER
-        primary key autoincrement,
-    seller_id    INTEGER
-        constraint products
-            references seller,
-    title        TEXT,
-    price        INTEGER,
-    rating       INTEGER,
-    rating_count INTEGER
+    color_id    integer,
+    product_id  integer,
+    color       text,
+    items_count integer,
+    primary key (color_id autoincrement),
+    constraint color
+        foreign key (product_id) references products
 );
 
-insert into products_dg_tmp(product_id, seller_id, title, price, rating, rating_count)
-select product_id, seller_id, title, price, rating, rating_count
-from products;
+create table sells
+(
+    sell_id           INTEGER,
+    product_id        INTEGER,
+    seller_id         INTEGER,
+    client_id         INTEGER,
+    date_of_sale      TEXT,
+    date_of_insertion TEXT,
+    status_id         TEXT,
+    items_count       INTEGER,
+    address_id        INTEGER,
+    primary key (sell_id autoincrement)
+);
 
-drop table products;
+create table sizes
+(
+    size_id     INTEGER,
+    product_id  INTEGER,
+    size        TEXT,
+    items_count INTEGER,
+    primary key (size_id autoincrement),
+    constraint sizes
+        foreign key (product_id) references products
+);
 
-alter table products_dg_tmp
-    rename to products;
+create table types
+(
+    type_id     INTEGER,
+    description TEXT,
+    product_id  INTEGER,
+    primary key (type_id autoincrement),
+    constraint types
+        foreign key (product_id) references products
+);
+
+create table user
+(
+    user_id  INTEGER,
+    login    TEXT,
+    password TEXT,
+    phone    INTEGER,
+    email    TEXT,
+    primary key (user_id autoincrement),
+    unique (login)
+);
