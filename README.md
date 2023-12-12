@@ -1,4 +1,7 @@
+
 0 git clone https://github.com/kerrian21/project.git
+
+git chekout -b volodya
 
 (1) Інтегрувати код з репозиторія собі на пк.
 
