@@ -174,7 +174,6 @@ function addToBasket(productId) {
 }
 
 function addToDatabase(productId) {
-    // Assuming you have an endpoint on your server to handle adding products to the basket
     fetch('/add_to_basket', {
         method: 'POST',
         headers: {
@@ -188,13 +187,11 @@ function addToDatabase(productId) {
 }
 
 
-// Функція оновлення корзини в локальному сховищі та виведення інформації в консоль
 function updateBasket() {
     localStorage.setItem('selectedProductIds', JSON.stringify(selectedProductIds));
     console.log("Added to basket:", selectedProductIds);
 }
 
-// Функція для перегляду кошика
 function viewCart() {
     if (selectedProductIds.length > 0) {
         var productIdsString = selectedProductIds.join(',');
@@ -205,7 +202,6 @@ function viewCart() {
     }
 }
 
-// Функція для видалення товару з кошика
 function removeProduct(productIdToRemove) {
             selectedProductIds = selectedProductIds.filter(id => id !== productIdToRemove);
             updateBasket();
