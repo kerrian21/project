@@ -147,12 +147,9 @@
 
 <button onclick="viewCart()">View Cart</button>
 
-<!-- Додана можливість видалення товарів на сторінці кошика -->
  <button onclick="removeProduct()">Remove Product</button>
 
 <script>
-// Global variables
-var selectedProductId = null;
 var selectedProductIds = [];
 
 
@@ -179,7 +176,7 @@ function addToDatabase(productId) {
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ product_id: productId }), // Send product_id to the server
+        body: JSON.stringify({ product_id: productId }),
     })
     .then(response => response.json())
     .then(data => console.log('Product added to basket:', data))
