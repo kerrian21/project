@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart</title>
+</head>
+<body>
+   <h1>{% if result %}{{ result[0][1] }}{% endif %}</h1>
+<ul>
+    {% for item in result %}
+        <li>
+            <strong>Price:</strong> {{ item[3] }} <br>
+            <strong>Color:</strong> {{ item[2] }} <br>
+            <strong>Rating:</strong> {{ item[4] }} <br>
+            <strong>Size:</strong> {{ item[5] }}
+        </li>
+    {% endfor %}
+</ul>
+
+</body>
+</html>

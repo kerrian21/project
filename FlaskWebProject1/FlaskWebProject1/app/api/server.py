@@ -8,6 +8,37 @@ app = Flask(__name__)
 conn = sqlite3.connect('identifier.sqlite', check_same_thread=False)
 cursor = conn.cursor()
 
+drop_table_query = 'DROP TABLE IF EXISTS besket;'
+cursor.execute(drop_table_query)
+conn.commit()
+
+# Create the table with the new schema
+create_table_query = '''
+CREATE TABLE besket (
+    product_id INTEGER,
+    seller_id INTEGER,
+    title TEXT,
+    color TEXT,
+    price INTEGER,
+    rating INTEGER,
+    rating_count INTEGER
+);
+'''
+cursor.execute(create_table_query)
+conn.commit()
+
+# Check if the 'color' column exists in the table
+cursor.execute("PRAGMA table_info(besket);")
+columns = cursor.fetchall()
+column_names = [column[1] for column in columns]
+
+# If 'color' is not in column_names, add it
+if 'color' not in column_names:
+    alter_table_query = 'ALTER TABLE besket ADD COLUMN color TEXT;'
+    cursor.execute(alter_table_query)
+    conn.commit()
+
+
 
 
 def check_user_exists(username, email, phone_number, password):
@@ -24,7 +55,7 @@ def check_user_exists(username, email, phone_number, password):
 
 @app.route('/')
 def index():
-    cursor.execute('SELECT title, color, price FROM products ORDER BY price ASC')
+    cursor.execute('SELECT product_id, seller_id, title, color, price FROM products ORDER BY price ASC')
     result = cursor.fetchall()
     return render_template('index.html', result=result)
 
@@ -127,7 +158,7 @@ def catalog():
                     result = cursor.fetchall()
                     return render_template('jacket.html', result=result)
             elif name == 'Pants':
-                    cursor.execute("""SELECT title, color, price FROM products 
+                    cursor.execute("""SELECT product_id, title, color, price FROM products 
                                            JOIN types ON products.product_id = types.product_id WHERE types.description = ?""",
                                (name,))
                     result = cursor.fetchall()
@@ -186,6 +217,67 @@ def filter_price():
                 else:
                     message = f"Sorry, nothing was found for your request '{name}'."
                     return render_template('results.html', message=message)
+
+
+@app.route('/add_to_basket', methods=['GET', 'POST'])
+def add_to_basket():
+    if request.method == 'POST':
+        product_id = request.json.get('product_id')
+        print(product_id)
+
+        cursor.execute('SELECT product_id, title, color, price FROM products WHERE product_id = ?',
+                       (product_id,))
+        product = cursor.fetchone()
+        print(product)
+
+        if product:
+
+            cursor.execute(
+                'INSERT INTO basket (product_id, title, color, price) VALUES (?, ?, ?, ?)',
+                (product[0], product[1], product[2], product[3]))
+            conn.commit()
+        return redirect('/')
+
+
+@app.route('/basket', methods=['GET', 'POST'])
+def view_basket():
+    if request.method == 'GET':
+        product_ids = request.args.get('product_id', '').split(',')
+
+
+        cursor = conn.cursor()
+
+
+        cursor.execute('SELECT * FROM basket WHERE product_id IN ({})'.format(','.join(['?'] * len(product_ids))), product_ids)
+        basket_items = cursor.fetchall()
+        print(basket_items)
+
+
+        return render_template('besket.html', basket_items=basket_items)
+
+    elif request.method == 'POST':
+        product_ids_to_remove = request.form.getlist('product_id')
+
+        cursor = conn.cursor()
+
+        placeholders = ','.join(['?'] * len(product_ids_to_remove))
+        cursor.execute('DELETE FROM basket WHERE product_id IN ({})'.format(placeholders), product_ids_to_remove)
+        conn.commit()
+        return redirect('/basket')
+
+@app.route('/title', methods = ['POST', 'GET'])
+def title():
+    if request.method == 'GET':
+        product_ids = request.args.getlist('product_id')
+        cursor.execute('''
+            SELECT products.seller_id, products.title, products.color, products.price, products.rating, sizes.size
+            FROM products
+            JOIN sizes ON products.product_id = sizes.product_id
+            WHERE products.product_id IN ({})
+        '''.format(','.join(['?'] * len(product_ids))), product_ids)
+        result_title = cursor.fetchall()
+        print(result_title)
+        return render_template('title.html', result=result_title)
 
 
 if __name__ == '__main__':

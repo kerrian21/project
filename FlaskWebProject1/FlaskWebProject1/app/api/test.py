@@ -1,36 +1,31 @@
-from flask import Flask, render_template, request, redirect
+
+from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
 
-app = Flask(__name__)
-
+product_id = input()
 conn = sqlite3.connect('identifier.sqlite', check_same_thread=False)
 cursor = conn.cursor()
 
-@app.route('/', methods=['POST', 'GET'])
-def filter_price():
-    if request.method == 'GET':
-        name = request.args.get('name')
+cursor.execute('SELECT seller_id, title, color, price, rating, rating_count FROM products WHERE product_id = ?',
+                       (product_id,))
 
-        if name:
-            cursor.execute('SELECT title, price FROM products WHERE price = ?', (name,))
-            exact_result = cursor.fetchall()
+product = cursor.fetchone()
+print(product)
+if product:
+    cursor.execute(
+                'INSERT INTO products (seller_id, title, color, price, rating, rating_count) VALUES (?, ?, ?, ?, ?, ?)',
+                (product[0], product[1], product[2], product[3], product[4], product[5]))
+    conn.commit()
+product_id_tuple = (product_id,)
+cursor.execute('SELECT * FROM products WHERE product_id IN ({})'.format(','.join(['?'] * len(product_id_tuple))), product_id_tuple)
+basket_items = cursor.fetchall()
+print(basket_items)
+placeholders = ','.join(['?'] * len(product_id))
+cursor.execute('DELETE FROM products WHERE product_id IN ({})'.format(placeholders),product_id)
+conn.commit()
 
-            if exact_result:
-                message = f"Here is what was found for your query '{name}'."
-                return render_template('results.html', message=message, results=exact_result)
-            else:
-                cursor.execute('SELECT title, price FROM products WHERE price LIKE ? COLLATE NOCASE ORDER BY price ASC', ('%' + name + '%',))
-                similar_result = cursor.fetchall()
 
-                if similar_result:
-                    message = f"Unfortunately, no prices were found for your request '{name}', but similar ones were found."
-                    return render_template('results.html', message=message, results=similar_result)
-                else:
-                    message = f"Sorry, nothing was found for your request '{name}'."
-                    return render_template('results.html', message=message)
 
-if __name__ == '__main__':
-    app.run(debug=True)
 
 
 

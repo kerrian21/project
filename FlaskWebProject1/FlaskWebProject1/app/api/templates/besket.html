@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart</title>
+</head>
+<body>
+
+<ul id="basketList">
+    {% for item in basket_items %}
+        <li>
+            <strong>Title:</strong> {{ item[1] }} <br>
+            <strong>Price:</strong> {{ item[3] }} <br>
+            <strong>Color:</strong> {{ item[2] }}
+            <form action="/basket" method="post" class="removeProductForm">
+                <input type="hidden" name="product_id" value="{{ item[0] }}">
+                <button type="button" class="removeButton">Remove from Cart</button>
+            </form>
+        </li>
+    {% endfor %}
+</ul>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var removeButtons = document.querySelectorAll('.removeButton');
+
+    removeButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            var productId = button.closest('li').querySelector('input[name="product_id"]').value;
+
+            // Make a POST request to remove the product
+            fetch('/basket', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'product_id=' + encodeURIComponent(productId),
+            })
+            .then(response => {
+                if (response.ok) {
+                    // If the response is successful, remove the product from the UI
+                    button.closest('li').remove();
+
+                    // Now, add the product back to the basket
+                    addToBasket(productId);
+                } else {
+                    console.error('Failed to remove product from the basket.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    });
+});
+
+</script>
+
+</body>
+</html>

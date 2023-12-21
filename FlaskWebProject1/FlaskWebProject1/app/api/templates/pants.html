@@ -76,18 +76,99 @@
         <ul>
             {% for res in result %}
                 <li>
-                    <strong>Title:</strong> {{ res[0] }} <br>
-                    <strong>Color:</strong> {{ res[1] }} <br>
-                    <strong>Price:</strong> {{ res[2] }}
+                    <strong>Title:</strong> {{ res[1] }} <br>
+                    <strong>Color:</strong> {{ res[2] }} <br>
+                    <strong>Price:</strong> {{ res[3] }}
+                    <form id="addToBasketForm{{ res[0] }}" action="/add_to_basket" method="post">
+                <input type="hidden" id="product_id" name="product_id" value="{{ res[0] }}">
+                <button type="button" onclick="addToBasket('{{ res[0] }}')">Add to basket</button>
+            </form>
                 </li>
             {% endfor %}
         </ul>
     {% else %}
         <p>No results found for your query.</p>
     {% endif %}
+<button onclick="viewCart()">View Cart</button>
+
+<!-- Додана можливість видалення товарів на сторінці кошика -->
+ <button onclick="removeProduct()">Remove Product</button>
+
+<script>
+// Global variables
+var selectedProductId = null;
+var selectedProductIds = [];
 
 
-    </>
+
+function addToBasket(productId) {
+    if (!selectedProductIds.includes(productId)) {
+        selectedProductIds.push(productId);
+        addToDatabase(productId);
+        updateBasket();
+    } else {
+        console.log("Product is already in the basket.");
+    }
+}
+
+
+function addToDatabase(productId) {
+    // Assuming you have an endpoint on your server to handle adding products to the basket
+    fetch('/add_to_basket', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ product_id: productId }), // Send product_id to the server
+    })
+    .then(response => response.json())
+    .then(data => console.log('Product added to basket:', data))
+    .catch(error => console.error('Error adding product to basket:', error));
+}
+
+
+// Функція оновлення корзини в локальному сховищі та виведення інформації в консоль
+function updateBasket() {
+    localStorage.setItem('selectedProductIds', JSON.stringify(selectedProductIds));
+    console.log("Added to basket:", selectedProductIds);
+}
+
+// Функція для перегляду кошика
+function viewCart() {
+    if (selectedProductIds.length > 0) {
+        var productIdsString = selectedProductIds.join(',');
+        var url = "/basket?product_id=" + productIdsString;
+        window.location.href = url;
+    } else {
+        console.log("No products selected for the cart.");
+    }
+}
+
+// Функція для видалення товару з кошика
+function removeProduct(productIdToRemove) {
+            selectedProductIds = selectedProductIds.filter(id => id !== productIdToRemove);
+            updateBasket();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var storedProductIds = localStorage.getItem('selectedProductIds');
+            if (storedProductIds) {
+                selectedProductIds = JSON.parse(storedProductIds);
+                console.log("Restored from localStorage:", selectedProductIds);
+            }
+
+            var deleteButtons = document.querySelectorAll('.deleteButton');
+            deleteButtons.forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var productId = button.closest('li').querySelector('input[name="product_id"]').value;
+                    selectedProductIds = selectedProductIds.filter(id => id !== productId);
+                    updateBasket();
+        });
+    });
+});
+</script>
+
+
 
 
     </body>

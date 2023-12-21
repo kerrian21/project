@@ -126,21 +126,135 @@
             <button type="submit">Filter</button>
          </form>
 
-        {% if result %}
-        <ul>
-            {% for res in result %}
-                <li>
-                    <strong>Title:</strong> {{ res[0] }} <br>
-                    <strong>Color:</strong> {{ res[1] }} <br>
-                    <strong>Price:</strong> {{ res[2] }}
-                </li>
-            {% endfor %}
-        </ul>
-        {% else %}
-            <p>No results found for your query.</p>
-        {% endif %}
 
-    </>
+<ul id="infoContainer">
+    {% for item in result %}
+        <li>
+            <strong>Title:</strong> {{ item[2] }} <br>
+            <strong>Color:</strong> {{ item[3] }} <br>
+            <strong>Price:</strong> {{ item[4] }}
+            <form id="addToBasketForm{{ item[0] }}" action="/add_to_basket" method="post">
+                <input type="hidden" id="product_id" name="product_id" value="{{ item[0] }}">
+                <button type="button" onclick="addToBasket('{{ item[0] }}')">Add to basket</button>
+            </form>
+            <form action="/title" method="get">
+                <input type="hidden" name="product_id" value="{{ item[0] }}">
+                <button type="button" id="viewDetailsButton" onclick="viewProductDetails('{{ item[0] }}')">Info</button>
+            </form>
+        </li>
+    {% endfor %}
+</ul>
+
+<button onclick="viewCart()">View Cart</button>
+
+<!-- Додана можливість видалення товарів на сторінці кошика -->
+ <button onclick="removeProduct()">Remove Product</button>
+
+<script>
+// Global variables
+var selectedProductId = null;
+var selectedProductIds = [];
+
+
+
+function addToBasket(productId) {
+    if (!selectedProductIds.includes(productId)) {
+        selectedProductIds.push(productId);
+        addToDatabase(productId);
+        updateBasket();
+    } else {
+        const index = selectedProductIds.indexOf(productId);
+        if (index !== -1) {
+            selectedProductIds.splice(index, 1);}
+        if (!selectedProductIds.includes(productId)){
+        selectedProductIds.push(productId);
+        addToDatabase(productId);
+        updateBasket();}
+    }
+}
+
+function addToDatabase(productId) {
+    // Assuming you have an endpoint on your server to handle adding products to the basket
+    fetch('/add_to_basket', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ product_id: productId }), // Send product_id to the server
+    })
+    .then(response => response.json())
+    .then(data => console.log('Product added to basket:', data))
+    .catch(error => console.error('Error adding product to basket:', error));
+}
+
+
+// Функція оновлення корзини в локальному сховищі та виведення інформації в консоль
+function updateBasket() {
+    localStorage.setItem('selectedProductIds', JSON.stringify(selectedProductIds));
+    console.log("Added to basket:", selectedProductIds);
+}
+
+// Функція для перегляду кошика
+function viewCart() {
+    if (selectedProductIds.length > 0) {
+        var productIdsString = selectedProductIds.join(',');
+        var url = "/basket?product_id=" + productIdsString;
+        window.location.href = url;
+    } else {
+        console.log("No products selected for the cart.");
+    }
+}
+
+// Функція для видалення товару з кошика
+function removeProduct(productIdToRemove) {
+            selectedProductIds = selectedProductIds.filter(id => id !== productIdToRemove);
+            updateBasket();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var storedProductIds = localStorage.getItem('selectedProductIds');
+            if (storedProductIds) {
+                selectedProductIds = JSON.parse(storedProductIds);
+                console.log("Restored from localStorage:", selectedProductIds);
+            }
+
+            var deleteButtons = document.querySelectorAll('.deleteButton');
+            deleteButtons.forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var productId = button.closest('li').querySelector('input[name="product_id"]').value;
+                    selectedProductIds = selectedProductIds.filter(id => id !== productId);
+                    updateBasket();
+        });
+    });
+});
+
+function viewProductDetails(productId) {
+
+    var url = "/title?product_id=" + productId;
+    window.location.href = url;
+}
+
+
+document.addEventListener('DOMContentLoaded', function() {
+
+    var viewDetailsButtons = document.querySelectorAll('.viewDetailsButton');
+    viewDetailsButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            var productId = button.closest('li').querySelector('input[name="product_id"]').value;
+            viewProductDetails(productId);
+        });
+    });
+
+
+});
+
+
+</script>
+
+
+
+
+
 
 <button onclick="changeBg()">КАТАЛОГ</button>
 
@@ -169,15 +283,6 @@
             Телефон:+380730841941(Дмитро)<br>
 
         Електронна пошта:Dmytro.Chornii.KB.2023@lpnu.ua<br>
-
-
-
-
-
-
-
-
-
 
     </div>
 
