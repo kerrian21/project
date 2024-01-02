@@ -91,11 +91,11 @@
     {% endif %}
 <button onclick="viewCart()">View Cart</button>
 
-
+<!-- Додана можливість видалення товарів на сторінці кошика -->
  <button onclick="removeProduct()">Remove Product</button>
 
 <script>
-
+// Global variables
 var selectedProductId = null;
 var selectedProductIds = [];
 
@@ -113,13 +113,13 @@ function addToBasket(productId) {
 
 
 function addToDatabase(productId) {
-
+    // Assuming you have an endpoint on your server to handle adding products to the basket
     fetch('/add_to_basket', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ product_id: productId }),
+        body: JSON.stringify({ product_id: productId }), // Send product_id to the server
     })
     .then(response => response.json())
     .then(data => console.log('Product added to basket:', data))
@@ -127,12 +127,13 @@ function addToDatabase(productId) {
 }
 
 
+// Функція оновлення корзини в локальному сховищі та виведення інформації в консоль
 function updateBasket() {
     localStorage.setItem('selectedProductIds', JSON.stringify(selectedProductIds));
     console.log("Added to basket:", selectedProductIds);
 }
 
-
+// Функція для перегляду кошика
 function viewCart() {
     if (selectedProductIds.length > 0) {
         var productIdsString = selectedProductIds.join(',');
@@ -143,6 +144,7 @@ function viewCart() {
     }
 }
 
+// Функція для видалення товару з кошика
 function removeProduct(productIdToRemove) {
             selectedProductIds = selectedProductIds.filter(id => id !== productIdToRemove);
             updateBasket();

@@ -25,9 +25,6 @@
          html{
              background-color: #800080;
          }
-         body{
-             color: white;
-         }
 
         summary{
             height: 30px;
@@ -40,7 +37,7 @@
             line-height: 30px;
             border-radius: 10px;
             background-color: white;
-            color: black;
+
 
         }
 
@@ -107,9 +104,6 @@
 
     <body>
 
-          {% if message %}
-             <p>{{ message }}</p>
-          {% endif %}
        <form action="search" method="POST">
         <button onclick="changefont()">Пошук</button>
         <input type="text" name="query">
@@ -117,7 +111,7 @@
 
         <form action="catalog" method="POST">
         <button onclick="changefont()">Обрати</button>
-        <select name="clothes" id="clothesSelect" onchange="updateSelectedClothing()">
+        <select name="clothes" id="clothesSelect">
             <option value="Shirt">Сорочка</option>
             <option value="T-Shirt">Футболка</option>
             <option value="Pants">Штани</option>
@@ -126,63 +120,38 @@
         </select>
         </form>
 
-         <form action="/filter_price" method="GET">
+         <form action="/filter_price" method="GET" id="filterForm">
             <label for="price">Enter Price:</label>
             <input type="text" id="price" name="name" value="{{ price }}" required>
             <button type="submit">Filter</button>
          </form>
 
-         <form action="/filter_rating" method="GET">
-            <label for="rating">Enter Rating:</label>
-            <input type="text" id="rating" name="name" value="{{ rating }}" required>
-            <button type="submit">Filter</button>
-         </form>
-         <form action="/filter_size" method="POST">
-            <label for="size">Enter Size:</label>
-            <input type="text" id="size" name="query" required>
-            <button type="submit">Filter</button>
-         </form>
-
-
 
 <ul id="infoContainer">
-    {% set grouped_results = {} %}
     {% for item in result %}
-        {% set product_key = (item[0], item[1], item[2], item[3], item[4]) %}
-        {% if product_key not in grouped_results %}
-            {% set _ = grouped_results.update({product_key: []}) %}
-        {% endif %}
-        {% set _ = grouped_results[product_key].append(item[5]) %}
-    {% endfor %}
-
-    {% for product_key, sizes in grouped_results.items() %}
         <li>
-            <strong>Title:</strong> {{ product_key[1] }} <br>
-            <strong>Price:</strong> {{ product_key[3] }} <br>
-            <strong>Color:</strong> {{ product_key[2] }} <br>
-            <strong>Rating:</strong> {{ product_key[4] }} <br>
-            <strong>Size:</strong> {{ sizes|join(', ') }} <br>
-            <form id="addToBasketForm{{ product_key[0] }}" action="/add_to_basket" method="post">
-                <input type="hidden" id="product_id" name="product_id" value="{{ product_key[0] }}">
-                <button type="button" onclick="addToBasket('{{ product_key[0] }}')">Add to basket</button>
+            <strong>Title:</strong> {{ item[2] }} <br>
+            <strong>Color:</strong> {{ item[3] }} <br>
+            <strong>Price:</strong> {{ item[4] }}
+            <form id="addToBasketForm{{ item[0] }}" action="/add_to_basket" method="post">
+                <input type="hidden" id="product_id" name="product_id" value="{{ item[0] }}">
+                <button type="button" onclick="addToBasket('{{ item[0] }}')">Add to basket</button>
             </form>
             <form action="/title" method="get">
-                <input type="hidden" name="product_id" value="{{ product_key[0] }}">
-                <button type="button" id="viewDetailsButton" onclick="viewProductDetails('{{ product_key[0] }}')">Info</button>
+                <input type="hidden" name="product_id" value="{{ item[0] }}">
+                <button type="button" id="viewDetailsButton" onclick="viewProductDetails('{{ item[0] }}')">Info</button>
             </form>
-              <form action="/rating" method="POST" id="ratingForm" onsubmit="return rateProduct('{{ product_key[0] }}')">
-                    <input type="hidden" name="product_id" value="{{ product_key[0] }}">
-                    <input type="number" id="rating{{ product_key[0] }}" name="rating" min="0" max="5" required>
-                    <button type="submit">Rate</button>
-              </form>
         </li>
     {% endfor %}
 </ul>
 
 <button onclick="viewCart()">View Cart</button>
 
-<script>
+<!-- Додана можливість видалення товарів на сторінці кошика -->
+ <button onclick="removeProduct()">Remove Product</button>
 
+<script>
+// Global variables
 var selectedProductId = null;
 var selectedProductIds = [];
 
@@ -205,13 +174,13 @@ function addToBasket(productId) {
 }
 
 function addToDatabase(productId) {
-
+    // Assuming you have an endpoint on your server to handle adding products to the basket
     fetch('/add_to_basket', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ product_id: productId }),
+        body: JSON.stringify({ product_id: productId }), // Send product_id to the server
     })
     .then(response => response.json())
     .then(data => console.log('Product added to basket:', data))
@@ -219,13 +188,13 @@ function addToDatabase(productId) {
 }
 
 
-
+// Функція оновлення корзини в локальному сховищі та виведення інформації в консоль
 function updateBasket() {
     localStorage.setItem('selectedProductIds', JSON.stringify(selectedProductIds));
     console.log("Added to basket:", selectedProductIds);
 }
 
-
+// Функція для перегляду кошика
 function viewCart() {
     if (selectedProductIds.length > 0) {
         var productIdsString = selectedProductIds.join(',');
@@ -236,6 +205,7 @@ function viewCart() {
     }
 }
 
+// Функція для видалення товару з кошика
 function removeProduct(productIdToRemove) {
             selectedProductIds = selectedProductIds.filter(id => id !== productIdToRemove);
             updateBasket();
@@ -277,33 +247,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 });
-
-function rateProduct(productId) {
-    var ratingInput = document.getElementById("rating" + productId);
-    var rating = ratingInput.value;
-
-    var selectedClothing = document.getElementById("selectedClothing").value;
-    var title = document.getElementById("title" + productId).innerText;
-
-    var formData = new FormData();
-    formData.append('product_id', productId);
-    formData.append('rating', rating);
-    formData.append('selected_clothing', selectedClothing);
-    formData.append('title', title);
-
-    fetch('/rating', {
-        method: 'POST',
-        body: formData,
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Product rated:', data);
-
-
-        console.log("Rated product:", productId, "with rating:", rating, "and selected clothing:", selectedClothing, "and title:", title);
-    })
-    .catch(error => console.error('Error rating product:', error));
-}
 
 
 </script>
