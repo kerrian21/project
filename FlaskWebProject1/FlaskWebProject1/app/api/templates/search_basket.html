@@ -2,34 +2,49 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shopping Cart</title>
+    <title>Document</title>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
 </head>
+
 <body>
 
-    <form action="/search_basket" method="POST">
+        <form action="/search_basket" method="POST">
         <button onclick="changefont()">Пошук</button>
         <input type="text" name="query">
-    </form>
+        </form>
 
-<ul id="basketList">
-    {% for item in basket_items %}
+        {% if results %}
+    <ul>
+        {% if results %}
+    <ul type="disc">
+       {% for result in results %}
         <li>
-            <strong>Title:</strong> {{ item[1] }} <br>
-            <strong>Price:</strong> {{ item[3] }} <br>
-            <strong>Color:</strong> {{ item[2] }}
+            <strong>Title:</strong> {{ result.title }} <br>
+            <strong>Price:</strong> {{ result.price }} <br>
+            <strong>Color:</strong> {{ result.color }}
             <form action="/title" method="get">
-                <input type="hidden" name="product_id" value="{{ item[0] }}">
-                <button type="button" id="viewDetailsButton" onclick="viewProductDetails('{{ item[0] }}')">Info</button>
+                <input type="hidden" name="product_id" value="{{ result.product_id }}">
+                <button type="button" id="viewDetailsButton" onclick="viewProductDetails('{{ result.product_id }}')">Info</button>
             </form>
             <form action="/basket" method="post" class="removeProductForm">
-                <input type="hidden" name="product_id" value="{{ item[0] }}">
+                <input type="hidden" name="product_id" value="{{ result.product_id }}">
                 <button type="button" class="removeButton">Remove from Cart</button>
             </form>
         </li>
-    {% endfor %}
-</ul>
+        {% endfor %}
+
+    </ul>
+{% else %}
+    <p>No results found for your query.</p>
+{% endif %}
+
+
+    </ul>
+{% else %}
+    <p>No results found for your query.</p>
+{% endif %}
 
 <form action="/">
     <button type="submit">Go to home page</button>
@@ -42,6 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
     removeButtons.forEach(function(button) {
         button.addEventListener('click', function() {
             var productId = button.closest('li').querySelector('input[name="product_id"]').value;
+
 
             fetch('/basket', {
                 method: 'POST',
@@ -92,3 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </body>
 </html>
+
+
+
+

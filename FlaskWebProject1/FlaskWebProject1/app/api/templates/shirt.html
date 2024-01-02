@@ -77,9 +77,14 @@
         <ul>
             {% for res in result %}
                 <li>
-                    <strong>Title:</strong> {{ res[0] }} <br>
-                    <strong>Color:</strong> {{ res[1] }} <br>
-                    <strong>Price:</strong> {{ res[2] }}
+                    <strong>Title:</strong> {{ res[1] }} <br>
+                    <strong>Color:</strong> {{ res[2] }} <br>
+                    <strong>Price:</strong> {{ res[3] }}
+                    <form action="/rating" method="POST" id="ratingForm" onsubmit="return rateProduct('{{ res[0] }}')">
+                    <input type="hidden" name="product_id" value="{{ res[0] }}">
+                    <input type="number" id="rating{{ res[0] }}" name="rating" min="0" max="5" required>
+                    <button type="submit">Rate</button>
+              </form>
                 </li>
             {% endfor %}
         </ul>
@@ -87,9 +92,45 @@
         <p>No results found for your query.</p>
     {% endif %}
 
+<form action="/">
+    <button type="submit">Go to home page</button>
+</form>
 
-    </>
+<script>
+    function rateProduct(productId) {
+        var ratingInput = document.getElementById("rating" + productId);
+        var rating = ratingInput.value;
 
+        var formData = new FormData();
+        formData.append('product_id', productId);
+        formData.append('rating', rating);
+
+        fetch('/rating', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Product rated:', data);
+
+
+
+
+            alert('Rating updated successfully');
+
+
+            window.location.reload();
+        })
+        .catch(error => {
+            console.error('Error rating product:', error);
+
+
+        });
+
+
+        return false;
+    }
+</script>
 
     </body>
     <html />

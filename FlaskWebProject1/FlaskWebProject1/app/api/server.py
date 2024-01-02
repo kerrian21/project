@@ -4,42 +4,20 @@ import sqlite3
 
 app = Flask(__name__)
 
-
 conn = sqlite3.connect('identifier.sqlite', check_same_thread=False)
 cursor = conn.cursor()
 
-drop_table_query = 'DROP TABLE IF EXISTS besket;'
-cursor.execute(drop_table_query)
-conn.commit()
+ratings_data = {}
 
-# Create the table with the new schema
-create_table_query = '''
-CREATE TABLE besket (
-    product_id INTEGER,
-    seller_id INTEGER,
-    title TEXT,
-    color TEXT,
-    price INTEGER,
-    rating INTEGER,
-    rating_count INTEGER
-);
-'''
-cursor.execute(create_table_query)
-conn.commit()
+def store_rating(product_id, rating):
+    if product_id in ratings_data:
+        ratings_data[product_id].append(rating)
+    else:
+        ratings_data[product_id] = [rating]
 
-# Check if the 'color' column exists in the table
-cursor.execute("PRAGMA table_info(besket);")
-columns = cursor.fetchall()
-column_names = [column[1] for column in columns]
-
-# If 'color' is not in column_names, add it
-if 'color' not in column_names:
-    alter_table_query = 'ALTER TABLE besket ADD COLUMN color TEXT;'
-    cursor.execute(alter_table_query)
-    conn.commit()
-
-
-
+def calculate_average_rating():
+    all_ratings = [rating for ratings_list in ratings_data.values() for rating in ratings_list]
+    return sum(all_ratings) / len(all_ratings) if len(all_ratings) > 0 else 0
 
 def check_user_exists(username, email, phone_number, password):
     conn = sqlite3.connect('schema.sql')
@@ -55,7 +33,12 @@ def check_user_exists(username, email, phone_number, password):
 
 @app.route('/')
 def index():
-    cursor.execute('SELECT product_id, seller_id, title, color, price FROM products ORDER BY price ASC')
+    cursor.execute('''
+                    SELECT products.product_id, products.title, products.color, products.price, products.rating, sizes.size
+                    FROM products
+                    JOIN sizes ON products.product_id = sizes.product_id
+                    ORDER BY products.price ASC
+                ''')
     result = cursor.fetchall()
     return render_template('index.html', result=result)
 
@@ -81,57 +64,70 @@ def register():
 
             return "Your information was successfully saved" and redirect('/')
 
-@app.route('/search', methods=['POST','GET'])
+@app.route('/search', methods=['POST', 'GET'])
 def search():
     if request.method == 'POST':
         query = request.form.get('query')
-        parts = query.split()
 
-        title_query = ' '.join(parts)
-        title_sql_query = 'SELECT title, color, price FROM products WHERE title LIKE ? COLLATE NOCASE'
-        title_params = (f'%{title_query}%',)
+        try:
+            product_id_query = int(query)
+        except ValueError:
+            product_id_query = None
+
+        base_sql_query = '''
+            SELECT products.product_id, products.title, products.color, products.price, products.rating, sizes.size
+            FROM products
+            JOIN sizes ON products.product_id = sizes.product_id
+            '''
+
+        if product_id_query is not None:
+            id_sql_query = base_sql_query + 'WHERE products.product_id = ?'
+            id_params = (product_id_query,)
+            cursor.execute(id_sql_query, id_params)
+            id_results = cursor.fetchall()
+        else:
+            id_results = []
+
+        title_sql_query = base_sql_query + 'WHERE products.title LIKE ? COLLATE NOCASE'
+        title_params = (f'%{query}%',)
         cursor.execute(title_sql_query, title_params)
         title_results = cursor.fetchall()
 
-        color_query = parts[-1]
-        color_sql_query = 'SELECT title, color, price FROM products WHERE color LIKE ? COLLATE NOCASE'
-        color_params = (f'%{color_query}%',)
+        color_sql_query = base_sql_query + 'WHERE products.color LIKE ? COLLATE NOCASE'
+        color_params = (f'%{query}%',)
         cursor.execute(color_sql_query, color_params)
         color_results = cursor.fetchall()
 
-        price_sql_query = 'SELECT title, color, price FROM products WHERE price LIKE ? COLLATE NOCASE'
+        price_sql_query = base_sql_query + 'WHERE products.price LIKE ? COLLATE NOCASE ORDER BY products.price ASC'
         price_params = (f'%{query}%',)
         cursor.execute(price_sql_query, price_params)
         price_results = cursor.fetchall()
 
-        combined_sql_query = 'SELECT title, color, price FROM products WHERE title LIKE ? COLLATE NOCASE AND color LIKE ? COLLATE NOCASE AND price LIKE ? COLLATE NOCASE'
-        combined_params = (f'%{title_query}%', f'%{color_query}%', f'%{query}%')
-        cursor.execute(combined_sql_query, combined_params)
-        combined_results = cursor.fetchall()
+        rating_sql_query = base_sql_query + 'WHERE products.rating LIKE ? COLLATE NOCASE'
+        rating_params = (f'%{query}%',)
+        cursor.execute(rating_sql_query, rating_params)
+        rating_results = cursor.fetchall()
 
-        if len(parts) >= 2:
-            multi_title_query = ' '.join(parts)
-            multi_title_sql_query = 'SELECT title, color, price FROM products WHERE title LIKE ? COLLATE NOCASE'
-            multi_title_params = (f'%{multi_title_query}%',)
-            cursor.execute(multi_title_sql_query, multi_title_params)
-            multi_title_results = cursor.fetchall()
-        else:
-            multi_title_results = []
+        size_sql_query = base_sql_query + 'WHERE sizes.size LIKE ? COLLATE NOCASE'
+        size_params = (f'%{query}%',)
+        cursor.execute(size_sql_query, size_params)
+        size_results = cursor.fetchall()
 
-        all_results = title_results + color_results + price_results + combined_results + multi_title_results
-        unique_results = []
-        unique_titles_set = set()
+        all_results = id_results + title_results + color_results + price_results + rating_results + size_results
+        grouped_results = {}
+
         for result in all_results:
-            title, color, price = result[:3] + (None,) * (3 - len(result))
+            product_id, title, color, price, rating, size = result[:6] + (None,) * (6 - len(result))
 
-            title_lower = title.lower()
+            if product_id not in grouped_results:
+                grouped_results[product_id] = {'product_id': product_id, 'title': title, 'color': color, 'price': price, 'rating': rating, 'sizes': []}
 
-            if title_lower not in unique_titles_set:
-                unique_titles_set.add(title_lower)
-                unique_results.append({'title': title, 'color': color, 'price': price})
+            if size:
+                grouped_results[product_id]['sizes'].append(size)
+
+        unique_results = list(grouped_results.values())
 
         return render_template('search_results.html', results=unique_results)
-
 
 
 @app.route('/catalog', methods=['POST','GET'])
@@ -139,7 +135,7 @@ def catalog():
         if request.method == 'POST':
             name = request.form['clothes']
             if name == 'Shirt':
-                cursor.execute("""SELECT title, color, price FROM products 
+                cursor.execute("""SELECT products.product_id, title, color, price FROM products 
                                         JOIN types ON products.product_id = types.product_id WHERE types.description = ?""",
                             (name,))
                 result = cursor.fetchall()
@@ -170,45 +166,32 @@ def catalog():
                     result = cursor.fetchall()
                     return render_template('footwear.html', result=result)
 
-
-
-               
-@app.route('/range', methods=['POST','GET'])
-def _range_():
-        if request.methods == 'POST':
-            category = request.foorm['Category']
-            name = request.form['Name products']
-            color = request.form['Color']
-            _range_ = request.form['Range']
-
-            conn = sqlite3.connect('schema.sql')
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM products WHERE types = ? name = ? OR color = ?", (category, name, color))
-            results_t_shirts = cursor.fetchall()  
-            if results_t_shirts:
-                    conn = sqlite3.connect('schema.sql')
-                    cursor = conn.cursor()
-                    cursor.execute("UPDATE products SET Range = ? WHERE types = ? name = ? OR color = ?", (_range_, category, name ,color ))
-                    conn.commit()
-                    conn.close()
-                    return 'Updated'
-            else:
-                    return 'Not found'
- 
 @app.route('/filter_price', methods=['POST', 'GET'])
 def filter_price():
     if request.method == 'GET':
         name = request.args.get('name')
 
         if name:
-            cursor.execute('SELECT title, color, price FROM products WHERE price = ?', (name,))
+            cursor.execute('''
+                SELECT products.product_id, products.title, products.color, products.price, products.rating, sizes.size
+                FROM products
+                JOIN sizes ON products.product_id = sizes.product_id
+                WHERE products.price LIKE ? COLLATE NOCASE
+                ORDER BY products.price ASC
+            ''', ('%' + name + '%',))
             exact_result = cursor.fetchall()
 
             if exact_result:
                 message = f"Here is what was found for your query '{name}'."
                 return render_template('results.html', message=message, results=exact_result)
             else:
-                cursor.execute('SELECT title, color, price FROM products WHERE price LIKE ? COLLATE NOCASE ORDER BY price ASC', ('%' + name + '%',))
+                cursor.execute('''
+                    SELECT products.product_id, products.title, products.color, products.price, products.rating, sizes.size
+                    FROM products
+                    JOIN sizes ON products.product_id = sizes.product_id
+                    WHERE products.price LIKE ? COLLATE NOCASE
+                    ORDER BY products.price ASC
+                ''', ('%' + name + '%',))
                 similar_result = cursor.fetchall()
 
                 if similar_result:
@@ -244,9 +227,7 @@ def view_basket():
     if request.method == 'GET':
         product_ids = request.args.get('product_id', '').split(',')
 
-
         cursor = conn.cursor()
-
 
         cursor.execute('SELECT * FROM basket WHERE product_id IN ({})'.format(','.join(['?'] * len(product_ids))), product_ids)
         basket_items = cursor.fetchall()
@@ -278,6 +259,111 @@ def title():
         result_title = cursor.fetchall()
         print(result_title)
         return render_template('title.html', result=result_title)
+
+@app.route('/rating', methods = ['POST', 'GET'])
+def rating():
+    if request.method == 'POST':
+        product_id = request.form['product_id']
+        rating = int(request.form['rating'])
+
+        store_rating(product_id, rating)
+
+        average_rating = calculate_average_rating()
+
+        average_rating = round(average_rating, 1)
+
+        cursor.execute('''
+                   SELECT product_id FROM products WHERE product_id = ?
+               ''', (product_id,))
+        result = cursor.fetchone()
+
+        if result:
+            cursor.execute('''
+                       UPDATE products SET rating = ? WHERE product_id = ?
+                   ''', (average_rating, product_id))
+        return redirect('/')
+
+@app.route('/filter_rating', methods=['POST', 'GET'])
+def filter_rating():
+    if request.method == 'GET':
+        name = request.args.get('name')
+
+        if name:
+            cursor.execute('SELECT product_id, title, color, price, rating FROM products WHERE rating = ?', (name,))
+            exact_result = cursor.fetchall()
+
+            if exact_result:
+                message = f"Here is what was found for your query '{name}'."
+                return render_template('rating.html', message=message, results=exact_result)
+            else:
+                cursor.execute('SELECT product_id, title, color, price, rating FROM products WHERE rating LIKE ?', ('%' + name + '%',))
+                similar_result = cursor.fetchall()
+
+                if similar_result:
+                    message = f"Unfortunately, no prices were found for your request '{name}', but similar ones were found."
+                    return render_template('rating', message=message, results=similar_result)
+                else:
+                    message = f"Sorry, nothing was found for your request '{name}'."
+                    return render_template('rating.html', message=message)
+
+@app.route('/filter_size', methods=['POST', 'GET'])
+def filter_size():
+    if request.method == 'POST':
+        query = request.form.get('query')
+        parts = query.split()
+
+        if not parts:
+            return render_template('sizes.html', results=[])
+
+        placeholders = ','.join(['?' for _ in parts])
+
+        sql_query = f'''
+                SELECT products.product_id, products.title, products.color, products.price, products.rating, sizes.size
+                FROM products
+                JOIN sizes ON products.product_id = sizes.product_id
+                WHERE sizes.size IN ({placeholders})
+            '''
+
+        cursor.execute(sql_query, parts)
+        size_results = cursor.fetchall()
+        return render_template('sizes.html', results=size_results)
+
+@app.route('/search_basket', methods=['GET', 'POST'])
+def search_basket():
+    if request.method == 'POST':
+        query = request.form.get('query')
+
+        title_sql_query = 'SELECT product_id, title, color, price FROM products WHERE title LIKE ? COLLATE NOCASE'
+        title_params = (f'%{query}%',)
+        cursor.execute(title_sql_query, title_params)
+        title_results = cursor.fetchall()
+
+        color_sql_query = 'SELECT product_id, title, color, price FROM products WHERE color LIKE ? COLLATE NOCASE'
+        color_params = (f'%{query}%',)
+        cursor.execute(color_sql_query, color_params)
+        color_results = cursor.fetchall()
+
+        price_sql_query = 'SELECT product_id, title, color, price FROM products WHERE price LIKE ? COLLATE NOCASE'
+        price_params = (f'%{query}%',)
+        cursor.execute(price_sql_query, price_params)
+        price_results = cursor.fetchall()
+
+        unique_results = []
+
+        all_results = title_results + color_results + price_results
+
+        unique_titles_set = set()
+        for result in all_results:
+            product_id, title, color, price = result[:4] + (None,) * (4 - len(result))
+
+            title_lower = title.lower()
+
+            if title_lower not in unique_titles_set:
+                unique_titles_set.add(title_lower)
+                unique_results.append({'product_id': product_id, 'title': title, 'color': color, 'price': price})
+
+        return render_template('search_basket.html', results=unique_results)
+
 
 
 if __name__ == '__main__':

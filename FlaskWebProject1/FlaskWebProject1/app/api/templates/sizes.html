@@ -72,7 +72,7 @@
             <input type="text" id="price" name="name" value="{{ price }}" required>
             <button type="submit">Filter</button>
         </form>
-        <form action="/filter_rating" method="GET">
+         <form action="/filter_rating" method="GET">
             <label for="rating">Enter Rating:</label>
             <input type="text" id="rating" name="name" value="{{ rating }}" required>
             <button type="submit">Filter</button>
@@ -83,40 +83,40 @@
             <button type="submit">Filter</button>
          </form>
 
+     <ul>
+    {% set grouped_results = {} %}
+    {% for item in results %}
+        {% set product_key = (item[0], item[1], item[2], item[3], item[4], item[5]) %}
+        {% if product_key not in grouped_results %}
+            {% set _ = grouped_results.update({product_key: []}) %}
+        {% endif %}
+        {% set _ = grouped_results[product_key].append(item[5]) %}
+    {% endfor %}
 
-     {% if results %}
-        <ul>
-            {% for result in results %}
-                <li>
-                    <strong>Title:</strong> {{ result['title'] }}<br>
-                    <strong>Color:</strong> {{ result['color'] }}<br>
-                    <strong>Price:</strong> {{ result['price'] }}<br>
-                    <strong>Rating:</strong> {{ result['rating'] }}<br>
-                    <strong>Size:</strong>
-                    {% if result['sizes'] %}
-                        {{ result['sizes']|join(', ') }}<br>
-                    {% else %}
-                        No sizes available<br>
-                    {% endif %}
-                   <form id="addToBasketForm{{ result['product_id'] }}" action="/add_to_basket" method="post">
-                <input type="hidden" id="product_id" name="product_id" value="{{ result['product_id'] }}">
-                <button type="button" onclick="addToBasket('{{ result['product_id'] }}')">Add to basket</button>
+    {% for product_key, sizes in grouped_results.items() %}
+        <li>
+            <strong>Title:</strong> {{ product_key[1] }} <br>
+            <strong>Price:</strong> {{ product_key[3] }} <br>
+            <strong>Color:</strong> {{ product_key[2] }} <br>
+            <strong>Rating:</strong> {{ product_key[4] }} <br>
+            <strong>Size(s):</strong> {{ product_key[5] }} <br>
+            <form id="addToBasketForm{{ product_key[0] }}" action="/add_to_basket" method="post">
+                <input type="hidden" id="product_id" name="product_id" value="{{ product_key[0] }}">
+                <button type="button" onclick="addToBasket('{{ product_key[0] }}')">Add to basket</button>
             </form>
             <form action="/title" method="get">
-                <input type="hidden" name="product_id" value="{{ result['product_id'] }}">
-                <button type="button" id="viewDetailsButton" onclick="viewProductDetails('{{ result['product_id'] }}')">Info</button>
+                <input type="hidden" name="product_id" value="{{ product_key[0] }}">
+                <button type="button" id="viewDetailsButton" onclick="viewProductDetails('{{ product_key[0] }}')">Info</button>
             </form>
-              <form action="/rating" method="POST" id="ratingForm" onsubmit="return rateProduct('{{ result['product_id'] }}')">
-                    <input type="hidden" name="product_id" value="{{ result['product_id'] }}">
-                    <input type="number" id="rating{{ result['product_id'] }}" name="rating" min="0" max="5" required>
-                    <button type="submit">Rate</button>
-              </form>
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No results found.</p>
-    {% endif %}
+            <form action="/rating" method="POST" id="ratingForm" onsubmit="return rateProduct('{{ product_key[0] }}')">
+                <input type="hidden" name="product_id" value="{{ product_key[0] }}">
+                <label for="rating{{ product_key[0] }}">Rate:</label>
+                <input type="number" id="rating{{ product_key[0] }}" name="rating" min="0" max="5" required>
+                <button type="submit">Rate</button>
+            </form>
+        </li>
+    {% endfor %}
+</ul>
 
 <button onclick="viewCart()">View Cart</button>
 
@@ -216,8 +216,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 });
-
-function rateProduct(productId) {
+    function rateProduct(productId) {
         var ratingInput = document.getElementById("rating" + productId);
         var rating = ratingInput.value;
 
@@ -248,6 +247,7 @@ function rateProduct(productId) {
 
         return false;
     }
+
 </script>
 
     </body>
