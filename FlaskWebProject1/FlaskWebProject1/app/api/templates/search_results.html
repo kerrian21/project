@@ -100,7 +100,7 @@
                     {% endif %}
                    <form id="addToBasketForm{{ result['product_id'] }}" action="/add_to_basket" method="post">
                 <input type="hidden" id="product_id" name="product_id" value="{{ result['product_id'] }}">
-                <button type="button" onclick="addToBasket('{{ result['product_id'] }}')">Add to basket</button>
+                <button type="button" onclick="addToBasket('{{ result['product_id'] }}')">Add to cart</button>
             </form>
             <form action="/title" method="get">
                 <input type="hidden" name="product_id" value="{{ result['product_id'] }}">
@@ -108,6 +108,7 @@
             </form>
               <form action="/rating" method="POST" id="ratingForm" onsubmit="return rateProduct('{{ result['product_id'] }}')">
                     <input type="hidden" name="product_id" value="{{ result['product_id'] }}">
+                    <label for="rating{{ result['product_id'] }}">Rate:</label>
                     <input type="number" id="rating{{ result['product_id'] }}" name="rating" min="0" max="5" required>
                     <button type="submit">Rate</button>
               </form>
@@ -119,7 +120,9 @@
     {% endif %}
 
 <button onclick="viewCart()">View Cart</button>
-
+<form action="/">
+    <button type="submit">Home page</button>
+</form>
 <script>
 var selectedProductId = null;
 var selectedProductIds = [];

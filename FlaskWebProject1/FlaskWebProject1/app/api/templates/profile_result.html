@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Result</title>
+</head>
+<body>
+
+<h1>Profile</h1>
+
+{% if result %}
+    <p><strong>Login:</strong> {{ result[0][0] }}</p>
+    <p><strong>Email:</strong> {{ result[0][1] }}</p>
+    <p><strong>Phone:</strong> {{ result[0][2] }}</p>
+{% else %}
+    <p>No user information available.</p>
+{% endif %}
+
+<form action="/">
+    <button type="submit">Home page</button>
+</form>
+<div class="main-container">
+    <div class="form-group">
+        <a href="/profile_delete">
+            <button type="button">Delete profile</button>
+        </a>
+    </div>
+</body>
+</html>

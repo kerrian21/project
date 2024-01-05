@@ -73,39 +73,42 @@
         document.getElementById('price').value = price;
     </script>
 
-    {% if message %}
+ {% if message %}
     <p>{{ message }}</p>
 {% endif %}
 
-{% if results %}
-    <ul>
-        {% for res in results %}
-            <li>
-                    <strong>Title:</strong> {{ res[1] }} <br>
-                    <strong>Color:</strong> {{ res[2] }} <br>
-                    <strong>Price:</strong> {{ res[3] }} <br>
-                    <strong>Rating:</strong> {{ res[4] }} <br>
-                    <strong>Size:</strong> {{ res[5] }} <br>
-                <form id="addToBasketForm{{ res[0] }}" action="/add_to_basket" method="post">
-                <input type="hidden" id="product_id" name="product_id" value="{{ res[0] }}">
-                <button type="button" onclick="addToBasket('{{ res[0] }}')">Add to basket</button>
-            </form>
-            <form action="/title" method="get">
-                <input type="hidden" name="product_id" value="{{ res[0] }}">
-                <button type="button" id="viewDetailsButton" onclick="viewProductDetails('{{ res[0] }}')">Info</button>
-            </form>
-                <form action="/rating" method="POST" id="ratingForm" onsubmit="return rateProduct('{{ res[0] }}')">
-                    <input type="hidden" name="product_id" value="{{ res[0] }}">
-                    <input type="number" id="rating{{ res[0] }}" name="rating" min="0" max="5" required>
-                    <button type="submit">Rate</button>
-              </form>
-            </li>
-        {% endfor %}
-    </ul>
-{% endif %}
+    {% if results %}
+        <ul id="infoContainer">
+            {% for product_key, sizes in grouped_results.items() %}
+                <li>
+                    <strong>Title:</strong> {{ product_key[1] }} <br>
+                    <strong>Color:</strong> {{ product_key[2] }} <br>
+                    <strong>Price:</strong> {{ product_key[3] }} <br>
+                    <strong>Rating:</strong> {{ product_key[4] }} <br>
+                    <strong>Size(s):</strong> {{ sizes|join(', ') }} <br>
+                    <form id="addToBasketForm{{ product_key[0] }}" action="/add_to_basket" method="post">
+                        <input type="hidden" id="product_id" name="product_id" value="{{ product_key[0] }}">
+                        <button type="button" onclick="addToBasket('{{ product_key[0] }}')">Add to cart</button>
+                    </form>
+                    <form action="/title" method="get">
+                        <input type="hidden" name="product_id" value="{{ product_key[0] }}">
+                        <button type="button" id="viewDetailsButton" onclick="viewProductDetails('{{ product_key[0] }}')">Info</button>
+                    </form>
+                    <form action="/rating" method="POST" id="ratingForm" onsubmit="return rateProduct('{{ product_key[0] }}')">
+                        <input type="hidden" name="product_id" value="{{ product_key[0] }}">
+                        <label for="rating{{ product_key[0] }}">Rate:</label>
+                        <input type="number" id="rating{{ product_key[0] }}" name="rating" min="0" max="5" required>
+                        <button type="submit">Rate</button>
+                    </form>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
 
     <button onclick="viewCart()">View Cart</button>
-
+<form action="/">
+    <button type="submit">Home page</button>
+</form>
 <script>
 
 var selectedProductId = null;

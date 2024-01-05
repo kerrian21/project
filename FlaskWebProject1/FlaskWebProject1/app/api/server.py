@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
 
 
@@ -30,6 +30,14 @@ def check_user_exists(username, email, phone_number, password):
 
     return result is not None
 
+def group_by_product_key(results):
+    grouped_results = {}
+    for item in results:
+        product_key = (item[0], item[1], item[2], item[3], item[4])
+        if product_key not in grouped_results:
+            grouped_results[product_key] = []
+        grouped_results[product_key].append(item[5])
+    return grouped_results
 
 @app.route('/')
 def index():
@@ -132,39 +140,23 @@ def search():
 
 @app.route('/catalog', methods=['POST','GET'])
 def catalog():
-        if request.method == 'POST':
-            name = request.form['clothes']
-            if name == 'Shirt':
-                cursor.execute("""SELECT products.product_id, title, color, price FROM products 
-                                        JOIN types ON products.product_id = types.product_id WHERE types.description = ?""",
-                            (name,))
-                result = cursor.fetchall()
-                return render_template('shirt.html', result=result)
+    if request.method == 'POST':
+        name = request.form['clothes']
 
-            elif name == 'T-Shirt':
-                    cursor.execute("""SELECT title, color, price FROM products 
-                                            JOIN types ON products.product_id = types.product_id WHERE types.description = ?""",
-                                (name,))
-                    result = cursor.fetchall()
-                    return render_template('t-shirt.html', result=result)
-            elif name == 'Jacket':
-                    cursor.execute("""SELECT title, color, price FROM products 
-                                            JOIN types ON products.product_id = types.product_id WHERE types.description = ?""",
-                                (name,))
-                    result = cursor.fetchall()
-                    return render_template('jacket.html', result=result)
-            elif name == 'Pants':
-                    cursor.execute("""SELECT product_id, title, color, price FROM products 
-                                           JOIN types ON products.product_id = types.product_id WHERE types.description = ?""",
-                               (name,))
-                    result = cursor.fetchall()
-                    return render_template('pants.html', result=result)
-            elif name == 'Footwear':
-                    cursor.execute("""SELECT title, color, price FROM products 
-                                           JOIN types ON products.product_id = types.product_id WHERE types.description = ?""",
-                               (name,))
-                    result = cursor.fetchall()
-                    return render_template('footwear.html', result=result)
+        query = """
+            SELECT products.product_id, products.title, products.color, products.price, products.rating, sizes.size
+            FROM products
+            JOIN sizes ON products.product_id = sizes.product_id
+            JOIN types ON products.product_id = types.product_id
+            WHERE types.description = ?
+            ORDER BY products.price ASC;
+        """
+
+        cursor.execute(query, (name,))
+        result = cursor.fetchall()
+
+        template_name = f'{name.lower()}.html'
+        return render_template(template_name, result=result)
 
 @app.route('/filter_price', methods=['POST', 'GET'])
 def filter_price():
@@ -182,8 +174,10 @@ def filter_price():
             exact_result = cursor.fetchall()
 
             if exact_result:
+                # Assuming you have a function to group results by product key
+                grouped_results = group_by_product_key(exact_result)
                 message = f"Here is what was found for your query '{name}'."
-                return render_template('results.html', message=message, results=exact_result)
+                return render_template('results.html', message=message, results=exact_result, grouped_results=grouped_results)
             else:
                 cursor.execute('''
                     SELECT products.product_id, products.title, products.color, products.price, products.rating, sizes.size
@@ -289,22 +283,36 @@ def filter_rating():
         name = request.args.get('name')
 
         if name:
-            cursor.execute('SELECT product_id, title, color, price, rating FROM products WHERE rating = ?', (name,))
+            cursor.execute('''
+                SELECT products.product_id, products.title, products.color, products.price, products.rating, sizes.size
+                FROM products
+                JOIN sizes ON products.product_id = sizes.product_id
+                WHERE products.rating LIKE ? COLLATE NOCASE
+                ORDER BY products.price ASC
+            ''', ('%' + name + '%',))
             exact_result = cursor.fetchall()
 
             if exact_result:
+                grouped_results = group_by_product_key(exact_result)
                 message = f"Here is what was found for your query '{name}'."
-                return render_template('rating.html', message=message, results=exact_result)
+                return render_template('rating.html', message=message, results=exact_result, grouped_results=grouped_results)
             else:
-                cursor.execute('SELECT product_id, title, color, price, rating FROM products WHERE rating LIKE ?', ('%' + name + '%',))
+                cursor.execute('''
+                    SELECT products.product_id, products.title, products.color, products.price, products.rating, sizes.size
+                    FROM products
+                    JOIN sizes ON products.product_id = sizes.product_id
+                    WHERE products.rating LIKE ? COLLATE NOCASE
+                    ORDER BY products.price ASC
+                ''', ('%' + name + '%',))
                 similar_result = cursor.fetchall()
 
                 if similar_result:
-                    message = f"Unfortunately, no prices were found for your request '{name}', but similar ones were found."
-                    return render_template('rating', message=message, results=similar_result)
+                    message = f"Unfortunately, no ratings were found for your request '{name}', but similar ones were found."
+                    return render_template('rating.html', message=message, results=similar_result)
                 else:
                     message = f"Sorry, nothing was found for your request '{name}'."
                     return render_template('rating.html', message=message)
+
 
 @app.route('/filter_size', methods=['POST', 'GET'])
 def filter_size():
@@ -364,7 +372,71 @@ def search_basket():
 
         return render_template('search_basket.html', results=unique_results)
 
+@app.route('/authorization', methods=['GET', 'POST'])
+def authorization():
+        conn = sqlite3.connect('identifier.sqlite', check_same_thread=False)
+        cursor = conn.cursor()
+
+        if request.method == 'POST':
+            login = request.form.get('login')
+            password = request.form.get('password')
+            phone = request.form.get('phone')
+            email = request.form.get('email')
+
+            cursor.execute('SELECT * FROM user WHERE login = ? OR email = ?', (login, email))
+            existing_user = cursor.fetchone()
+
+            if existing_user:
+                return render_template('error.html', message='User already exists')
+
+            cursor.execute('INSERT INTO user (login, password, phone, email) VALUES (?, ?, ?, ?)',
+                           (login, password, phone, email))
+            conn.commit()
+            conn.close()
+            return render_template('success.html', message='Registration completed successfully')
+
+        conn.close()
+        return render_template('authorization.html')
+
+@app.route('/profile', methods=['GET', 'POST'])
+def portfolio():
+    if request.method == 'GET':
+        login = request.args.get('login')
+        password = request.args.get('password')
+
+        # Assuming 'login' and 'password' are passed as query parameters in the URL
+
+        cursor.execute('SELECT login, email, phone FROM user WHERE login = ? AND password = ?', (login, password))
+        result = cursor.fetchall()
 
 
+        return render_template('profile.html', result=result)
+
+    return render_template('profile_result.html')
+
+
+
+
+@app.route('/profile_result', methods=['GET', 'POST'])
+def profile_result():
+    if request.method == 'GET':
+        login = request.args.get('login')
+        password = request.args.get('password')
+        cursor.execute('SELECT login, email, phone FROM user WHERE login = ? AND password = ?', (login, password))
+        result = cursor.fetchall()
+        return render_template('profile_result.html', result=result)
+
+@app.route('/profile_delete', methods=['GET', 'POST'])
+def profile_delete():
+        return render_template('profile_delete.html')
+
+@app.route('/profile_delete_result', methods=['GET', 'POST'])
+def profile_delete_result():
+    if request.method == 'GET':
+        login = request.args.get('login')
+        password = request.args.get('password')
+        cursor.execute('DELETE FROM user WHERE login = ? AND password = ?', (login, password))
+        conn.commit()
+        return render_template('profile_delete_result.html', message='Removed profile')
 if __name__ == '__main__':
     app.run(debug=True)

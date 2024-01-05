@@ -72,28 +72,57 @@
             <input type="text" id="price" name="name" value="{{ price }}" required>
             <button type="submit">Filter</button>
         </form>
+        <form action="/filter_rating" method="GET">
+            <label for="rating">Enter Rating:</label>
+            <input type="text" id="rating" name="name" value="{{ rating }}" required>
+            <button type="submit">Filter</button>
+         </form>
+         <form action="/filter_size" method="POST">
+            <label for="size">Enter Size:</label>
+            <input type="text" id="size" name="query" required>
+            <button type="submit">Filter</button>
+         </form>
 
-    {% if result %}
-        <ul>
-            {% for res in result %}
-                <li>
-                    <strong>Title:</strong> {{ res[1] }} <br>
-                    <strong>Color:</strong> {{ res[2] }} <br>
-                    <strong>Price:</strong> {{ res[3] }}
-                    <form action="/rating" method="POST" id="ratingForm" onsubmit="return rateProduct('{{ res[0] }}')">
-                    <input type="hidden" name="product_id" value="{{ res[0] }}">
-                    <input type="number" id="rating{{ res[0] }}" name="rating" min="0" max="5" required>
-                    <button type="submit">Rate</button>
-              </form>
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No results found for your query.</p>
+
+    <ul id="infoContainer">
+    {% set grouped_results = {} %}
+{% for item in result %}
+    {% set product_key = (item[0], item[1], item[2], item[3], item[4]) %}
+    {% if product_key not in grouped_results %}
+        {% set _ = grouped_results.update({product_key: []}) %}
     {% endif %}
+    {% set _ = grouped_results[product_key].append(item[5]) %}
+{% endfor %}
+
+    {% for product_key, sizes in grouped_results.items() %}
+        <li>
+            <strong>Title:</strong> {{ product_key[1] }} <br>
+            <strong>Color:</strong> {{ product_key[2] }} <br>
+            <strong>Price:</strong> {{ product_key[3] }} <br>
+            <strong>Rating:</strong> {{ product_key[4] }} <br>
+            <strong>Size(s):</strong> {{ sizes|join(', ') }} <br>
+            <form id="addToBasketForm{{ product_key[0] }}" action="/add_to_basket" method="post">
+                <input type="hidden" id="product_id" name="product_id" value="{{ product_key[0] }}">
+                <button type="button" onclick="addToBasket('{{ product_key[0] }}')">Add to cart</button>
+            </form>
+            <form action="/title" method="get">
+                <input type="hidden" name="product_id" value="{{ product_key[0] }}">
+                <button type="button" id="viewDetailsButton" onclick="viewProductDetails('{{ product_key[0] }}')">Info</button>
+            </form>
+            <form action="/rating" method="POST" id="ratingForm" onsubmit="return rateProduct('{{ product_key[0] }}')">
+                <input type="hidden" name="product_id" value="{{ product_key[0] }}">
+                <label for="rating{{ product_key[0] }}">Rate:</label>
+                <input type="number" id="rating{{ product_key[0] }}" name="rating" min="0" max="5" required>
+                <button type="submit">Rate</button>
+            </form>
+        </li>
+    {% endfor %}
+</ul>
+
+<button onclick="viewCart()">View Cart</button>
 
 <form action="/">
-    <button type="submit">Go to home page</button>
+    <button type="submit">Home page</button>
 </form>
 
 <script>
