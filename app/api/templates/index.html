@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script>
+        function handleOptionSelection() {
+            var selectedOption = $("#clothesSelect").val();
+            var formAction = "catalog";
+            formAction += "?category=" + selectedOption;
+            $("#searchForm").attr("action", formAction).submit();
+        }
+    </script>
+
+</head>
+<style>
+
+
+
+    summary::-webkit-details marker{
+            display: none;
+        }
+         html{
+             background-color: #800080;
+         }
+
+        summary{
+            height: 30px;
+            width: 98%;
+            position: relative;
+            left: 1%;
+            border: 1px solid #333;
+            margin: 10px;
+            text-align: center;
+            line-height: 30px;
+            border-radius: 10px;
+            background-color: white;
+
+
+        }
+
+
+
+
+        .контейнер-пошуку {
+            display: flex;
+            justify-content: flex-end;
+            width: 70%;
+            margin: 0 auto;
+            padding: 10px;
+        }
+
+        .кнопка {
+            margin-left: 10px;
+        }
+
+        #inp {
+            margin-left: 5px;
+        }
+
+        }
+
+         .кнопка{
+             margin-right: 50px;
+         }
+
+          .контейнер-контактів {
+            display: none;
+            position: fixed;
+            bottom: 50px;
+            right: 10px;
+            padding: 10px;
+            background-color: #800080;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .кнопка-контакти {
+            position: fixed;
+            bottom: 50px;
+            right: 10px;
+            padding: 10px 20px;
+            background-color: #800080;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+</style>
+
+
+
+<body>
+
+    <datails>
+
+        <summary>PER ASPERA AD ASTRA</summary>
+
+    </datails>
+
+    <body>
+        <div class="main-container">
+    <div class="form-group">
+        <a href="/authorization">
+            <button type="button">Authorization</button>
+        </a>
+    </div>
+</div>
+        <div class="main-container">
+    <div class="form-group">
+        <a href="/profile">
+            <button type="button">Profile</button>
+        </a>
+    </div>
+</div>
+
+       <form action="search" method="POST">
+        <button onclick="changefont()">Пошук</button>
+        <input type="text" name="query">
+        </form>
+
+        <form action="catalog" method="POST">
+        <button onclick="changefont()">Обрати</button>
+        <select name="clothes" id="clothesSelect">
+            <option value="Shirt">Сорочка</option>
+            <option value="T-Shirt">Футболка</option>
+            <option value="Pants">Штани</option>
+            <option value="Jacket">Куртка</option>
+            <option value="Footwear">Взуття</option>
+        </select>
+        </form>
+
+         <form action="/filter_price" method="GET" id="filterForm">
+            <label for="price">Enter Price:</label>
+            <input type="text" id="price" name="name" value="{{ price }}" required>
+            <button type="submit">Filter</button>
+         </form>
+       <form action="/filter_rating" method="GET">
+            <label for="rating">Enter Rating:</label>
+            <input type="text" id="rating" name="name" value="{{ rating }}" required>
+            <button type="submit">Filter</button>
+         </form>
+         <form action="/filter_size" method="POST">
+            <label for="size">Enter Size:</label>
+            <input type="text" id="size" name="query" required>
+            <button type="submit">Filter</button>
+         </form>
+
+
+
+<ul id="infoContainer">
+    {% set grouped_results = {} %}
+{% for item in result %}
+    {% set product_key = (item[0], item[1], item[2], item[3], item[4]) %}
+    {% if product_key not in grouped_results %}
+        {% set _ = grouped_results.update({product_key: []}) %}
+    {% endif %}
+    {% set _ = grouped_results[product_key].append(item[5]) %}
+{% endfor %}
+
+    {% for product_key, sizes in grouped_results.items() %}
+        <li>
+            <strong>Title:</strong> {{ product_key[1] }} <br>
+            <strong>Color:</strong> {{ product_key[2] }} <br>
+            <strong>Price:</strong> {{ product_key[3] }} <br>
+            <strong>Rating:</strong> {{ product_key[4] }} <br>
+            <strong>Size(s):</strong> {{ sizes|join(', ') }} <br>
+            <form id="addToBasketForm{{ product_key[0] }}" action="/add_to_basket" method="post">
+                <input type="hidden" id="product_id" name="product_id" value="{{ product_key[0] }}">
+                <button type="button" onclick="addToBasket('{{ product_key[0] }}')">Add to cart</button>
+            </form>
+            <form action="/title" method="get">
+                <input type="hidden" name="product_id" value="{{ product_key[0] }}">
+                <button type="button" id="viewDetailsButton" onclick="viewProductDetails('{{ product_key[0] }}')">Info</button>
+            </form>
+            <form action="/rating" method="POST" id="ratingForm" onsubmit="return rateProduct('{{ product_key[0] }}')">
+                <input type="hidden" name="product_id" value="{{ product_key[0] }}">
+                <label for="rating{{ product_key[0] }}">Rate:</label>
+                <input type="number" id="rating{{ product_key[0] }}" name="rating" min="0" max="5" required>
+                <button type="submit">Rate</button>
+            </form>
+        </li>
+    {% endfor %}
+</ul>
+
+<button onclick="viewCart()">View Cart</button>
+
+
+<script>
+
+var selectedProductId = null;
+var selectedProductIds = [];
+
+
+
+function addToBasket(productId) {
+    if (!selectedProductIds.includes(productId)) {
+        selectedProductIds.push(productId);
+        addToDatabase(productId);
+        updateBasket();
+    } else {
+        const index = selectedProductIds.indexOf(productId);
+        if (index !== -1) {
+            selectedProductIds.splice(index, 1);}
+        if (!selectedProductIds.includes(productId)){
+        selectedProductIds.push(productId);
+        addToDatabase(productId);
+        updateBasket();}
+    }
+}
+
+function addToDatabase(productId) {
+
+    fetch('/add_to_basket', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ product_id: productId }),
+    })
+    .then(response => response.json())
+    .then(data => console.log('Product added to basket:', data))
+    .catch(error => console.error('Error adding product to basket:', error));
+}
+
+
+
+function updateBasket() {
+    localStorage.setItem('selectedProductIds', JSON.stringify(selectedProductIds));
+    console.log("Added to basket:", selectedProductIds);
+}
+
+
+function viewCart() {
+    if (selectedProductIds.length > 0) {
+        var productIdsString = selectedProductIds.join(',');
+        var url = "/basket?product_id=" + productIdsString;
+        window.location.href = url;
+    } else {
+        console.log("No products selected for the cart.");
+    }
+}
+
+
+function removeProduct(productIdToRemove) {
+            selectedProductIds = selectedProductIds.filter(id => id !== productIdToRemove);
+            updateBasket();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var storedProductIds = localStorage.getItem('selectedProductIds');
+            if (storedProductIds) {
+                selectedProductIds = JSON.parse(storedProductIds);
+                console.log("Restored from localStorage:", selectedProductIds);
+            }
+
+            var deleteButtons = document.querySelectorAll('.deleteButton');
+            deleteButtons.forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var productId = button.closest('li').querySelector('input[name="product_id"]').value;
+                    selectedProductIds = selectedProductIds.filter(id => id !== productId);
+                    updateBasket();
+        });
+    });
+});
+
+function viewProductDetails(productId) {
+
+    var url = "/title?product_id=" + productId;
+    window.location.href = url;
+}
+
+
+document.addEventListener('DOMContentLoaded', function() {
+
+    var viewDetailsButtons = document.querySelectorAll('.viewDetailsButton');
+    viewDetailsButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            var productId = button.closest('li').querySelector('input[name="product_id"]').value;
+            viewProductDetails(productId);
+        });
+    });
+
+
+});
+
+    function rateProduct(productId) {
+        var ratingInput = document.getElementById("rating" + productId);
+        var rating = ratingInput.value;
+
+        var formData = new FormData();
+        formData.append('product_id', productId);
+        formData.append('rating', rating);
+
+new-branch-danylo
+        fetch('/rating', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Product rated:', data);
+
+
+            alert('Rating updated successfully');
+
+
+            window.location.reload();
+        })
+        .catch(error => {
+            console.error('Error rating product:', error);
+
+
+        });
+
+
+        return false;
+    }
+
+</script>
+
+<button onclick="changeBg()">КАТАЛОГ</button>
+    <button> </button>
+
+
+
+     <button class="кнопка-контакти" onclick="показатиКонтакти()">Контакти</button>
+
+
+     <div class="контейнер-контактів" id="контейнер-контактів">
+
+        Телефон: 0976762133(Олег)<br>
+
+        Електронна пошта: olegprotsyk252@gmail.com<br>
+
+          Телефон:+380680727846(Володя)<br>
+
+        Електронна пошта:volodymyr.nakonechnyi.kb.2022@lpnu.ua<br>
+
+          Телефон:+(Максим)<br>
+
+        Електронна пошта:maksym.yanchynskyi.kb.2022@lpnu.ua<br>
+
+           Телефон:+(Данило)<br>
+
+        Електронна пошта:danylo.buhai.kb.2022@lpnu.ua<br>
+
+            Телефон:+380730841941(Дмитро)<br>
+
+        Електронна пошта:Dmytro.Chornii.KB.2023@lpnu.ua<br>
+
+    </div>
+
+    <script>
+        function показатиКонтакти() {
+            var контейнер = document.getElementById("контейнер-контактів");
+            контейнер.style.display = (контейнер.style.display === "none") ? "block" : "none";
+        }
+    </script>
+
+    </body>
+    <html />
