@@ -19,7 +19,7 @@
 
 
 
-   summary::-webkit-details marker{
+     summary::-webkit-details marker{
             display: none;
         }
          html{
@@ -72,7 +72,7 @@
             <input type="text" id="price" name="name" value="{{ price }}" required>
             <button type="submit">Filter</button>
         </form>
-        <form action="/filter_rating" method="GET">
+         <form action="/filter_rating" method="GET">
             <label for="rating">Enter Rating:</label>
             <input type="text" id="rating" name="name" value="{{ rating }}" required>
             <button type="submit">Filter</button>
@@ -83,24 +83,23 @@
             <button type="submit">Filter</button>
          </form>
 
-
-    <ul id="infoContainer">
+     <ul>
     {% set grouped_results = {} %}
-{% for item in result %}
-    {% set product_key = (item[0], item[1], item[2], item[3], item[4]) %}
-    {% if product_key not in grouped_results %}
-        {% set _ = grouped_results.update({product_key: []}) %}
-    {% endif %}
-    {% set _ = grouped_results[product_key].append(item[5]) %}
-{% endfor %}
+    {% for item in results %}
+        {% set product_key = (item[0], item[1], item[2], item[3], item[4], item[5]) %}
+        {% if product_key not in grouped_results %}
+            {% set _ = grouped_results.update({product_key: []}) %}
+        {% endif %}
+        {% set _ = grouped_results[product_key].append(item[5]) %}
+    {% endfor %}
 
     {% for product_key, sizes in grouped_results.items() %}
         <li>
             <strong>Title:</strong> {{ product_key[1] }} <br>
-            <strong>Color:</strong> {{ product_key[2] }} <br>
             <strong>Price:</strong> {{ product_key[3] }} <br>
+            <strong>Color:</strong> {{ product_key[2] }} <br>
             <strong>Rating:</strong> {{ product_key[4] }} <br>
-            <strong>Size(s):</strong> {{ sizes|join(', ') }} <br>
+            <strong>Size(s):</strong> {{ product_key[5] }} <br>
             <form id="addToBasketForm{{ product_key[0] }}" action="/add_to_basket" method="post">
                 <input type="hidden" id="product_id" name="product_id" value="{{ product_key[0] }}">
                 <button type="button" onclick="addToBasket('{{ product_key[0] }}')">Add to cart</button>
@@ -120,12 +119,105 @@
 </ul>
 
 <button onclick="viewCart()">View Cart</button>
-
 <form action="/">
     <button type="submit">Home page</button>
 </form>
-
 <script>
+var selectedProductId = null;
+var selectedProductIds = [];
+
+
+
+function addToBasket(productId) {
+    if (!selectedProductIds.includes(productId)) {
+        selectedProductIds.push(productId);
+        addToDatabase(productId);
+        updateBasket();
+    } else {
+        const index = selectedProductIds.indexOf(productId);
+        if (index !== -1) {
+            selectedProductIds.splice(index, 1);}
+        if (!selectedProductIds.includes(productId)){
+        selectedProductIds.push(productId);
+        addToDatabase(productId);
+        updateBasket();}
+    }
+}
+
+function addToDatabase(productId) {
+
+    fetch('/add_to_basket', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ product_id: productId }),
+    })
+    .then(response => response.json())
+    .then(data => console.log('Product added to basket:', data))
+    .catch(error => console.error('Error adding product to basket:', error));
+}
+
+
+
+function updateBasket() {
+    localStorage.setItem('selectedProductIds', JSON.stringify(selectedProductIds));
+    console.log("Added to basket:", selectedProductIds);
+}
+
+
+function viewCart() {
+    if (selectedProductIds.length > 0) {
+        var productIdsString = selectedProductIds.join(',');
+        var url = "/basket?product_id=" + productIdsString;
+        window.location.href = url;
+    } else {
+        console.log("No products selected for the cart.");
+    }
+}
+
+
+function removeProduct(productIdToRemove) {
+            selectedProductIds = selectedProductIds.filter(id => id !== productIdToRemove);
+            updateBasket();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var storedProductIds = localStorage.getItem('selectedProductIds');
+            if (storedProductIds) {
+                selectedProductIds = JSON.parse(storedProductIds);
+                console.log("Restored from localStorage:", selectedProductIds);
+            }
+
+            var deleteButtons = document.querySelectorAll('.deleteButton');
+            deleteButtons.forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var productId = button.closest('li').querySelector('input[name="product_id"]').value;
+                    selectedProductIds = selectedProductIds.filter(id => id !== productId);
+                    updateBasket();
+        });
+    });
+});
+
+function viewProductDetails(productId) {
+
+    var url = "/title?product_id=" + productId;
+    window.location.href = url;
+}
+
+
+document.addEventListener('DOMContentLoaded', function() {
+
+    var viewDetailsButtons = document.querySelectorAll('.viewDetailsButton');
+    viewDetailsButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            var productId = button.closest('li').querySelector('input[name="product_id"]').value;
+            viewProductDetails(productId);
+        });
+    });
+
+
+});
     function rateProduct(productId) {
         var ratingInput = document.getElementById("rating" + productId);
         var rating = ratingInput.value;
@@ -143,8 +235,6 @@
             console.log('Product rated:', data);
 
 
-
-
             alert('Rating updated successfully');
 
 
@@ -159,6 +249,7 @@
 
         return false;
     }
+
 </script>
 
     </body>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+<body>
+
+    <h1>Login</h1>
+    <form method="GET" action="/profile_result">
+        <label for="login">Login:</label>
+        <input type="text" id="login" name="login" required>
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+
+        <!-- Hidden inputs to pass data to the next page -->
+        <input type="hidden" name="hidden_login" id="hidden_login">
+        <input type="hidden" name="hidden_password" id="hidden_password">
+
+        <!-- Use a single form for the login -->
+        <button type="submit">Submit</button>
+
+        <!-- JavaScript to set hidden inputs before submitting the form -->
+        <script>
+            function submitForm() {
+                document.getElementById('hidden_login').value = document.getElementById('login').value;
+                document.getElementById('hidden_password').value = document.getElementById('password').value;
+                document.forms[0].submit();
+            }
+        </script>
+    </form>
+
+</body>
+</html>

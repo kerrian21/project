@@ -72,30 +72,186 @@
             <input type="text" id="price" name="name" value="{{ price }}" required>
             <button type="submit">Filter</button>
         </form>
-
-        {% if results %}
-    <ul>
-        {% if results %}
-    <ul>
-       {% for result in results %}
-            <p>Title: {{ result.title }}</p>
-            <p>Color: {{ result.color }}</p>
-            <p>Price: {{ result.price }}</p>
-        {% endfor %}
-
-    </ul>
-{% else %}
-    <p>No results found for your query.</p>
-{% endif %}
+        <form action="/filter_rating" method="GET">
+            <label for="rating">Enter Rating:</label>
+            <input type="text" id="rating" name="name" value="{{ rating }}" required>
+            <button type="submit">Filter</button>
+         </form>
+         <form action="/filter_size" method="POST">
+            <label for="size">Enter Size:</label>
+            <input type="text" id="size" name="query" required>
+            <button type="submit">Filter</button>
+         </form>
 
 
-    </ul>
-{% else %}
-    <p>No results found for your query.</p>
-{% endif %}
+     {% if results %}
+        <ul>
+            {% for result in results %}
+                <li>
+                    <strong>Title:</strong> {{ result['title'] }}<br>
+                    <strong>Color:</strong> {{ result['color'] }}<br>
+                    <strong>Price:</strong> {{ result['price'] }}<br>
+                    <strong>Rating:</strong> {{ result['rating'] }}<br>
+                    <strong>Size:</strong>
+                    {% if result['sizes'] %}
+                        {{ result['sizes']|join(', ') }}<br>
+                    {% else %}
+                        No sizes available<br>
+                    {% endif %}
+                   <form id="addToBasketForm{{ result['product_id'] }}" action="/add_to_basket" method="post">
+                <input type="hidden" id="product_id" name="product_id" value="{{ result['product_id'] }}">
+                <button type="button" onclick="addToBasket('{{ result['product_id'] }}')">Add to cart</button>
+            </form>
+            <form action="/title" method="get">
+                <input type="hidden" name="product_id" value="{{ result['product_id'] }}">
+                <button type="button" id="viewDetailsButton" onclick="viewProductDetails('{{ result['product_id'] }}')">Info</button>
+            </form>
+              <form action="/rating" method="POST" id="ratingForm" onsubmit="return rateProduct('{{ result['product_id'] }}')">
+                    <input type="hidden" name="product_id" value="{{ result['product_id'] }}">
+                    <label for="rating{{ result['product_id'] }}">Rate:</label>
+                    <input type="number" id="rating{{ result['product_id'] }}" name="rating" min="0" max="5" required>
+                    <button type="submit">Rate</button>
+              </form>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No results found.</p>
+    {% endif %}
 
-    </>
+<button onclick="viewCart()">View Cart</button>
+<form action="/">
+    <button type="submit">Home page</button>
+</form>
+<script>
+var selectedProductId = null;
+var selectedProductIds = [];
 
+
+
+function addToBasket(productId) {
+    if (!selectedProductIds.includes(productId)) {
+        selectedProductIds.push(productId);
+        addToDatabase(productId);
+        updateBasket();
+    } else {
+        const index = selectedProductIds.indexOf(productId);
+        if (index !== -1) {
+            selectedProductIds.splice(index, 1);}
+        if (!selectedProductIds.includes(productId)){
+        selectedProductIds.push(productId);
+        addToDatabase(productId);
+        updateBasket();}
+    }
+}
+
+function addToDatabase(productId) {
+
+    fetch('/add_to_basket', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ product_id: productId }),
+    })
+    .then(response => response.json())
+    .then(data => console.log('Product added to basket:', data))
+    .catch(error => console.error('Error adding product to basket:', error));
+}
+
+
+
+function updateBasket() {
+    localStorage.setItem('selectedProductIds', JSON.stringify(selectedProductIds));
+    console.log("Added to basket:", selectedProductIds);
+}
+
+
+function viewCart() {
+    if (selectedProductIds.length > 0) {
+        var productIdsString = selectedProductIds.join(',');
+        var url = "/basket?product_id=" + productIdsString;
+        window.location.href = url;
+    } else {
+        console.log("No products selected for the cart.");
+    }
+}
+
+
+function removeProduct(productIdToRemove) {
+            selectedProductIds = selectedProductIds.filter(id => id !== productIdToRemove);
+            updateBasket();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var storedProductIds = localStorage.getItem('selectedProductIds');
+            if (storedProductIds) {
+                selectedProductIds = JSON.parse(storedProductIds);
+                console.log("Restored from localStorage:", selectedProductIds);
+            }
+
+            var deleteButtons = document.querySelectorAll('.deleteButton');
+            deleteButtons.forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var productId = button.closest('li').querySelector('input[name="product_id"]').value;
+                    selectedProductIds = selectedProductIds.filter(id => id !== productId);
+                    updateBasket();
+        });
+    });
+});
+
+function viewProductDetails(productId) {
+
+    var url = "/title?product_id=" + productId;
+    window.location.href = url;
+}
+
+
+document.addEventListener('DOMContentLoaded', function() {
+
+    var viewDetailsButtons = document.querySelectorAll('.viewDetailsButton');
+    viewDetailsButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            var productId = button.closest('li').querySelector('input[name="product_id"]').value;
+            viewProductDetails(productId);
+        });
+    });
+
+
+});
+
+function rateProduct(productId) {
+        var ratingInput = document.getElementById("rating" + productId);
+        var rating = ratingInput.value;
+
+        var formData = new FormData();
+        formData.append('product_id', productId);
+        formData.append('rating', rating);
+
+        fetch('/rating', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Product rated:', data);
+
+
+            alert('Rating updated successfully');
+
+
+            window.location.reload();
+        })
+        .catch(error => {
+            console.error('Error rating product:', error);
+
+
+        });
+
+
+        return false;
+    }
+</script>
 
     </body>
     <html />
